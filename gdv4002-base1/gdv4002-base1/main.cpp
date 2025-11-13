@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "InGameObject.hpp"
+#include "ShipBase.h"
 
 //global veriables
 const float pi = 3.14159265359f;

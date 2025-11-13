@@ -39,7 +39,7 @@
     <ClCompile Include="GameObject2D.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
-    <ClCompile Include="InGameObject.cpp">
+    <ClCompile Include="ShipBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -65,7 +65,7 @@
     <ClInclude Include="GameObject2D.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="InGameObject.hpp">
+    <ClInclude Include="ShipBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
