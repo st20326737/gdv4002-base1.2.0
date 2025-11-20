@@ -57,10 +57,10 @@ void spawnAsteroid();
 void turnAsteroid(double);
 
 GameObject2D* player1;
-GameObject2D* bullet;
-GameObject2D* largeSize;
-GameObject2D* midSize;
-GameObject2D* smallSize;
+//GameObject2D* bullet;
+//GameObject2D* largeSize;
+//GameObject2D* midSize;
+//GameObject2D* smallSize;
 
 int playerTextureID;
 int bulletTextureID;
@@ -313,7 +313,7 @@ void makePlayer()
 	player1 = new GameObject2D(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), playerTextureID);
 	addObject("player", player1);
 
-	InGameObject* ship = new InGameObject("player1_ship", 0.0f, glm::radians(90.0f), 100, 999);
+	//InGameObject* ship = new InGameObject("player1_ship", 0.0f, glm::radians(90.0f), 100, 999);
 
 }
 
@@ -322,12 +322,12 @@ void makePlayer()
 void shootBullet(GameObject2D* player1, double tDelta)
 {
 	
-	bullet = new GameObject2D(glm::vec2(player1->position.x, player1->position.y), player1->orientation, glm::vec2(2.5f, 2.5f), bulletTextureID);
-	addObject("bullet", bullet);
+	//bullet = new GameObject2D(glm::vec2(player1->position.x, player1->position.y), player1->orientation, glm::vec2(2.5f, 2.5f), bulletTextureID);
+	//addObject("bullet", bullet);
 
-	glm::vec2 temp = glm::vec2(player1->position.x, player1->position.y);
+	//glm::vec2 temp = glm::vec2(player1->position.x, player1->position.y);
 
-	InGameObject* plasma = new InGameObject("bullet", 0.0f, glm::radians(90.0f), 100, 999);
+	//InGameObject* plasma = new InGameObject("bullet", 0.0f, glm::radians(90.0f), 100, 999);
 
 }
 void flyBullet(GameObjectCollection bullet, double tDelta)
