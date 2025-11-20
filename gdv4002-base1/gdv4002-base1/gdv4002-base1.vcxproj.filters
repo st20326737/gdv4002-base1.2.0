@@ -54,6 +54,12 @@
     <ClCompile Include="AstrodsBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Small.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MidSized.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine.h">
@@ -90,6 +96,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AstrodsBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Small.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MidSized.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

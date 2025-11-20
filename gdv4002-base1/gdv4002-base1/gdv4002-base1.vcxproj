@@ -142,8 +142,10 @@ copy "$(SolutionDir)Libs\FreeImage\Wrapper\FreeImagePlus\dist\x64\FreeImagePlus.
     <ClCompile Include="GUMemory.cpp" />
     <ClCompile Include="GUObject.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MidSized.cpp" />
     <ClCompile Include="PlayerShip.cpp" />
     <ClCompile Include="ShipBase.cpp" />
+    <ClCompile Include="Small.cpp" />
     <ClCompile Include="texture_loader.cpp" />
     <ClCompile Include="UFO.cpp" />
   </ItemGroup>
@@ -156,8 +158,10 @@ copy "$(SolutionDir)Libs\FreeImage\Wrapper\FreeImagePlus\dist\x64\FreeImagePlus.
     <ClInclude Include="GUClock.h" />
     <ClInclude Include="GUMemory.h" />
     <ClInclude Include="GUObject.h" />
+    <ClInclude Include="MidSized.h" />
     <ClInclude Include="PlayerShip.h" />
     <ClInclude Include="ShipBase.h" />
+    <ClInclude Include="Small.h" />
     <ClInclude Include="texture_loader.h" />
     <ClInclude Include="UFO.h" />
   </ItemGroup>
