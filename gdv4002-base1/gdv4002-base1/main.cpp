@@ -2,7 +2,13 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "ShipBase.h"
+#include "Bomba.h"
+#include "Healing.h"
+#include "PlayerShip.h"
+#include "Shield.h"
+#include "UFO.h"
+#include "AstrodsBase.h"
+#include "ProjectilesBase.h"
 
 //global veriables
 const float pi = 3.14159265359f;
@@ -28,6 +34,14 @@ float shoottimer = 1.0f;
 float maxTurnAsteroid = 5.0f;
 float maxSpeedAsteroid = 5.0f;
 
+//arrays
+AstrodsBase* smallSize[40];
+AstrodsBase* midSize[20];
+AstrodsBase* bigSize[10];
+
+ProjectilesBase* bulletArray[35];
+ProjectilesBase* enemyBulletArray[100];
+ProjectilesBase* missileArray[2];
 
 
 // Function prototypes
@@ -76,6 +90,11 @@ int main(void)
 		printf("Cannot setup game window!!!\n");
 		return initResult; // exit if setup failed
 	}
+
+	// set up the arrays
+	
+
+
 
 	//
 	// Setup game scene objects here
@@ -281,6 +300,12 @@ void keepOnScreen(float viewWidth, float viewHight, GameObject2D* player1)
 		player1->position.y *= -1.0f;
 	}
 }
+
+void ast()
+{
+
+}
+
 
 void makePlayer()
 {
