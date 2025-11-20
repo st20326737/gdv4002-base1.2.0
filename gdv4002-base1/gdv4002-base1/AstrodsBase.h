@@ -32,6 +32,5 @@ public:
 	void setAcceleration(float initAcceleration);
 	void setIsDead(bool initAlive);
 
-	};
 };
 
