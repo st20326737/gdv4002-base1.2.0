@@ -21,37 +21,37 @@ ProjectilesBase::~ProjectilesBase()
 }
 
 // Getter methods
-int ProjectilesBase::getDamage() const
+int ProjectilesBase::getDamage()
 {
-	return damage;
+	return this->damage;
 }
-bool ProjectilesBase::getIsDead() const
+bool ProjectilesBase::getIsDead()
 {
-	return isDead;
+	return this->isDead;
 }
-float ProjectilesBase::getMass() const
+float ProjectilesBase::getMass()
 {
-	return mass;
+	return this->mass;
 }
-float ProjectilesBase::getAcceleration() const
+float ProjectilesBase::getAcceleration()
 {
-	return acceleration;
+	return this->acceleration;
 }
 
 // Setter methods
 void ProjectilesBase::setDamage(int initDamage)
 {
-	damage = initDamage;
+	this->damage = initDamage;
 }
 void ProjectilesBase::setIsDead(bool initIsDead)
 {
-	isDead = initIsDead;
+	this->isDead = initIsDead;
 }
 void ProjectilesBase::setMass(float initMass)
 {
-	mass = initMass;
+	this->mass = initMass;
 }
 void ProjectilesBase::setAcceleration(float initAcceleration)
 {
-	acceleration = initAcceleration;
+	this->acceleration = initAcceleration;
 }

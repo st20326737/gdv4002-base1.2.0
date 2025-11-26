@@ -10,6 +10,9 @@
 #include "AstrodsBase.h"
 #include "ProjectilesBase.h"
 
+using std::endl;
+using std::cout;
+
 //global veriables
 const float pi = 3.14159265359f;
 const float maxSpeed = 200.0f;
@@ -57,6 +60,8 @@ void bulletOffScreen(float, float);
 void spawnAsteroid();
 void setUpArrays();
 
+void myRenderScene(GLFWwindow* window);
+
 //GameObject2D* bullet;
 //GameObject2D* largeSize;
 //GameObject2D* midSize;
@@ -89,9 +94,6 @@ int main(void)
 		return initResult; // exit if setup failed
 	}
 
-	// set up the arrays
-	setUpArrays();
-
 	//
 	// Setup game scene objects here
 	//
@@ -100,6 +102,9 @@ int main(void)
 	largTextureID = loadTexture("Resources\\Textures\\bullet.png", TextureProperties::NearestFilterTexture());
 	midTextureID = loadTexture("Resources\\Textures\\bullet.png", TextureProperties::NearestFilterTexture());
 	smallTextureID = loadTexture("Resources\\Textures\\bullet.png", TextureProperties::NearestFilterTexture());
+
+	// set up the arrays
+	setUpArrays();
 
 	//hide axis lines
 	hideAxisLines();
@@ -112,6 +117,8 @@ int main(void)
 
 	// Register keyboard handler with engine
 	setKeyboardHandler(myKeyboardHandler);
+
+	setRenderFunction(myRenderScene);
 
 	// Enter main loop - this handles update and render calls
 	engineMainLoop();
@@ -145,10 +152,9 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 		{
 			shootBullet(playerShip, (float)tDelta);
 			shoottimer = 0.0f;
-			playerShip->setIsShooting(true);
 		}
 	}
-	
+
 	flyBullet(tDelta);
 
 	bulletOffScreen(getViewplaneWidth() / 2.0f, getViewplaneHeight() / 2.0f);
@@ -204,7 +210,6 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 
 	playerShip->position.x += dx;
 	playerShip->position.y += dy;
-
 
 }
 
@@ -305,50 +310,34 @@ void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, in
 
 void setUpArrays()
 {
-	//asteroid objects
-	AstrodsBase* smallAsteroid;
-	AstrodsBase* midAsteroid;
-	AstrodsBase* bigAsteroid;
-	
-	smallAsteroid = new AstrodsBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), smallTextureID, 5, 10, 10.0f, 5.0f, true);
-	midAsteroid = new AstrodsBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), midTextureID, 10, 20, 20.0f, 2.0f, true);
-	bigAsteroid = new AstrodsBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), largTextureID, 20, 40, 40.0f, 0.5f, true);
-
 	//asteroid arrays
 	for (int i = 0; i < 40; i++)
 	{
-		smallSize[i] = smallAsteroid;
+		smallSize[i] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), smallTextureID, 5, 10, 10.0f, 5.0f, true);
 	}
 	for (int j = 0; j < 20; j++)
 	{
-		midSize[j] = midAsteroid;
+		midSize[j] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), midTextureID, 10, 20, 20.0f, 2.0f, true);
 	}
 	for (int z = 0; z < 10; z++)
 	{
-		bigSize[z] = bigAsteroid;
+		bigSize[z] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), largTextureID, 20, 40, 40.0f, 0.5f, true);
 	}
-
-	//projectile objects
-	ProjectilesBase* bullet;
-	ProjectilesBase* enemyBullet;
-	ProjectilesBase* missile;
-
-	bullet = new ProjectilesBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 10, false, 1.0f, 50.0f);
-	enemyBullet = new ProjectilesBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 10, false, 1.0f, 50.0f);
-	missile = new ProjectilesBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 50, false, 10.0f, 10.0f);
 
 	//projectile arrays
 	for (int a = 0; a < 35; a++)
 	{
-		bulletArray[a] = bullet;
+		bulletArray[a] = new ProjectilesBase(glm::vec2(0.0f, 200.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 10, true, 1.0f, 150.0f);
+		cout << "bullet array set up at index " << a << endl;
+		cout << a << ": " << bulletArray[a]->getIsDead() << endl;
 	}
 	for (int b = 0; b < 100; b++)
 	{
-		enemyBulletArray[b] = enemyBullet;
+		enemyBulletArray[b] = new ProjectilesBase(glm::vec2(0.0f, 200.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 10, true, 1.0f, 250.0f);
 	}
 	for (int c = 0; c < 2; c++)
 	{
-		missileArray[c] = missile;
+		missileArray[c] = new ProjectilesBase(glm::vec2(0.0f, 200.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 50, true, 10.0f, 50.0f);
 	}
 }
 
@@ -389,7 +378,7 @@ void makePlayer()
 	
 	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float initOrientationAcceleration, bool initIsShooting
 	playerShip = new PlayerShip(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), playerTextureID, 100, 100, 25.0f, 0.5f, false, 5.0f, false);
-	addObject("player", playerShip);
+
 
 }
 
@@ -401,7 +390,7 @@ void shootBullet(PlayerShip* playerShip, double tDelta)
 	{
 		if (bulletArray[i]->getIsDead())
 		{
-			bulletArray[i]->setIsFlying(true);
+			bulletArray[i]->setIsDead(false);
 			bulletArray[i]->position = playerShip->position;
 			bulletArray[i]->orientation = playerShip->orientation;
 			break;
@@ -412,7 +401,17 @@ void shootBullet(PlayerShip* playerShip, double tDelta)
 
 void flyBullet(double tDelta)
 {
-	
+	for (int i = 0; i < 35; i++)
+	{
+		if (!(bulletArray[i]->getIsDead()))
+		{
+			float dx = bulletArray[i]->getAcceleration() * cos(bulletArray[i]->orientation) * (float)tDelta;
+			float dy = bulletArray[i]->getAcceleration() * sin(bulletArray[i]->orientation) * (float)tDelta;
+			bulletArray[i]->position.x += dx;
+			bulletArray[i]->position.y += dy;
+			cout << "flying bullet from index " << i << endl;
+		}
+	}
 
 }
 void bulletOffScreen(float viewWidth, float viewHight)
@@ -420,7 +419,59 @@ void bulletOffScreen(float viewWidth, float viewHight)
 	float width = viewWidth + 2.0f;
 	float height = viewHight + 2.0f;
 
+	for (int i = 0; i < 35; i++)
+	{
+		if (!(bulletArray[i]->getIsDead()))
+		{
+			if (bulletArray[i]->position.x < width && bulletArray[i]->position.x > -width && bulletArray[i]->position.y < height && bulletArray[i]->position.y > -height && bulletArray[i]->getIsDead() == false)
+			{
+				//do nothing
+			}
+			else
+			{
+				bulletArray[i]->setIsDead(true);
+				bulletArray[i]->position = glm::vec2(0.0f, 200.0f);
+				cout << "bullet despawns " << i << endl;
+			}
+		}
+	}
 	
+}
+
+void myRenderScene(GLFWwindow* window)
+{
+	
+	// Render player ship
+	playerShip->render();
+
+	// Render asteroids
+	for (int i = 0; i < 40; i++)
+	{
+		smallSize[i]->render();
+	}
+	for (int j = 0; j < 20; j++)
+	{
+		midSize[j]->render();
+	}
+	for (int z = 0; z < 10; z++)
+	{
+		bigSize[z]->render();
+	}
+
+	// Render bullets
+	for (int a = 0; a < 35; a++)
+	{
+		
+		bulletArray[a]->render();
+	}
+	for (int b = 0; b < 100; b++)
+	{
+		enemyBulletArray[b]->render();
+	}
+	for (int c = 0; c < 2; c++)
+	{
+		missileArray[c]->render();
+	}
 }
 
 void spawnAsteroid()

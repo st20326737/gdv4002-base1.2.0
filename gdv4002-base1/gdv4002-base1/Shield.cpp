@@ -15,11 +15,11 @@ Shield::~Shield()
 // Getter method
 bool Shield::getShieldActive() const
 {
-	return shieldActive;
+	return this->shieldActive;
 }
 
 // Setter method
 void Shield::setShieldActive(bool initShieldActive)
 {
-	shieldActive = initShieldActive;
+	this->shieldActive = initShieldActive;
 }

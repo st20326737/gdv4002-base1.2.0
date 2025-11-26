@@ -17,10 +17,10 @@ public:
 	~ProjectilesBase();
 
 	// Getter methods
-	int getDamage() const;
-	bool getIsDead() const;
-	float getMass() const;
-	float getAcceleration() const;
+	int getDamage();
+	bool getIsDead();
+	float getMass();
+	float getAcceleration();
 
 	// Setter methods
 	void setDamage(int initDamage);

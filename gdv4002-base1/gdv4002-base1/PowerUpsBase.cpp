@@ -17,20 +17,20 @@ PowerUpsBase::~PowerUpsBase()
 // Getter methods
 bool PowerUpsBase::getIsDead() const
 {
-	return isDead;
+	return this->isDead;
 }
 
 bool PowerUpsBase::getIsCollected() const
 {
-	return isCollected;
+	return this->isCollected;
 }
 
 // Setter methods
 void PowerUpsBase::setIsDead(bool initIsDead)
 {
-	isDead = initIsDead;
+	this->isDead = initIsDead;
 }
 void PowerUpsBase::setIsCollected(bool initIsCollected)
 {
-	isCollected = initIsCollected;
+	this->isCollected = initIsCollected;
 }

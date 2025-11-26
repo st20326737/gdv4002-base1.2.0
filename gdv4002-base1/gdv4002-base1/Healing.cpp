@@ -15,11 +15,11 @@ Healing::~Healing()
 // Getter method
 int Healing::getHealAmount() const
 {
-	return healAmount;
+	return this->healAmount;
 }
 
 // Setter method
 void Healing::setHealAmount(int initHealAmount)
 {
-	healAmount = initHealAmount;
+	this->healAmount = initHealAmount;
 }
