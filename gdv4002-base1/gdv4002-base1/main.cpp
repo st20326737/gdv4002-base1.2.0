@@ -21,6 +21,7 @@ static bool dPressed = false;//right
 static bool wPressed = false;//forward
 static bool sPressed = false;//backward
 static bool spacePressed = false;//shoot bullet
+static bool shiftPressed = false;//break
 static bool flyingBullet = false;//bullet is flying
 
 float turnVelocity = 0.0f;//- = left, + = right
@@ -47,20 +48,22 @@ ProjectilesBase* missileArray[2];
 // Function prototypes
 void myUpdateScene(GLFWwindow* window, double tDelta);
 void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, int mods);
-void keepOnScreen(float viewWidth, float viewHight, GameObject2D*);
+void keepOnScreen(float viewWidth, float viewHight, PlayerShip*);
 void makePlayer();
 
 void shootBullet(GameObject2D*, double tDelta);
-void flyBullet(GameObjectCollection, double tDelta);
+void flyBullet(double tDelta);
 void bulletOffScreen(float, float);
 void spawnAsteroid();
-void turnAsteroid(double);
+void setUpArrays();
 
-GameObject2D* player1;
 //GameObject2D* bullet;
 //GameObject2D* largeSize;
 //GameObject2D* midSize;
 //GameObject2D* smallSize;
+
+PlayerShip* playerShip;
+
 
 int playerTextureID;
 int bulletTextureID;
@@ -72,13 +75,8 @@ int main(void)
 {
 	srand(time(0));
 
-
-
 	// Pi constant
 	const float pi = 3.14159265359f;
-
-	//how many bullets can be on screen at once
-
 
 	// Initialise the engine (create window, setup OpenGL backend)
 	int initResult = engineInit("GDV4002 - Applied Maths for Games", 1024, 1024, 100);
@@ -92,9 +90,7 @@ int main(void)
 	}
 
 	// set up the arrays
-	
-
-
+	setUpArrays();
 
 	//
 	// Setup game scene objects here
@@ -105,14 +101,16 @@ int main(void)
 	midTextureID = loadTexture("Resources\\Textures\\bullet.png", TextureProperties::NearestFilterTexture());
 	smallTextureID = loadTexture("Resources\\Textures\\bullet.png", TextureProperties::NearestFilterTexture());
 
+	//hide axis lines
 	hideAxisLines();
 
+	//make player ship
 	makePlayer();
 
-	spawnAsteroid();
-
+	// Register update function with engine
 	setUpdateFunction(myUpdateScene);
 
+	// Register keyboard handler with engine
 	setKeyboardHandler(myKeyboardHandler);
 
 	// Enter main loop - this handles update and render calls
@@ -130,15 +128,32 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 {
 
 	// Update game objects here
-	keepOnScreen(getViewplaneWidth() / 2.0f, getViewplaneHeight() / 2.0f, player1);
+	keepOnScreen(getViewplaneWidth() / 2.0f, getViewplaneHeight() / 2.0f, playerShip);
 
-	turnAsteroid((float)tDelta);
+	//asteroids
+	
 
 	// Update player rotation based on key presses
 	float thetaVelocity; // radians per second
 
+	//shoot
 	shoottimer += (float)tDelta;
 
+	if (shoottimer >= shootCooldown)
+	{
+		if (spacePressed)
+		{
+			shootBullet(playerShip, (float)tDelta);
+			shoottimer = 0.0f;
+			playerShip->setIsShooting(true);
+		}
+	}
+	
+	flyBullet((float)tDelta);
+
+	bulletOffScreen(getViewplaneWidth() / 2.0f, getViewplaneHeight() / 2.0f);
+
+	//turn
 	if (aPressed)
 	{
 		turnVelocity += turnAcceleration;
@@ -155,19 +170,10 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 
 	thetaVelocity = (pi / 180.0f) * turnVelocity;
 
-	player1->orientation += thetaVelocity * (float)tDelta;
+	playerShip->orientation += thetaVelocity * (float)tDelta;
 
-	// Update player speed based on key presses
-	if (shoottimer >= shootCooldown)
-	{
-		if (spacePressed)
-		{
-			shootBullet(player1, (float)tDelta);
-			shoottimer = 0.0f;
-			flyingBullet = true;
-		}
-	}
 
+	//accelerate
 	if (wPressed)
 	{
 		forwardVelocity += forwardAcceleration;
@@ -176,25 +182,28 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 	{
 		forwardVelocity -= forwardAcceleration;
 	}
+	if (shiftPressed)
+	{
+		if (forwardVelocity > 0)
+		{
+			forwardVelocity -= forwardAcceleration;
+		}
+		else if (forwardVelocity < 0)
+		{
+			forwardVelocity += forwardAcceleration;
+		}
+	}
 
 	if (fabs(forwardVelocity) > maxSpeed)
 	{
 		forwardVelocity = (forwardVelocity / fabs(forwardVelocity)) * maxSpeed;//scale to max speed with sign
 	}
 
-	dx = forwardVelocity * cos(player1->orientation) * (float)tDelta;
-	dy = forwardVelocity * sin(player1->orientation) * (float)tDelta;
+	dx = forwardVelocity * cos(playerShip->orientation) * (float)tDelta;
+	dy = forwardVelocity * sin(playerShip->orientation) * (float)tDelta;
 
-	player1->position.x += dx;
-	player1->position.y += dy;
-
-
-
-	GameObjectCollection bullets = getObjectCollection("bullet");
-	flyBullet(bullets, (float)tDelta);
-
-	bulletOffScreen(getViewplaneWidth() / 2.0f, getViewplaneHeight() / 2.0f);
-
+	playerShip->position.x += dx;
+	playerShip->position.y += dy;
 
 
 }
@@ -210,21 +219,25 @@ void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, in
 		switch (key)
 		{
 		case GLFW_KEY_A:
+		case GLFW_KEY_LEFT:
 			// If escape is pressed tell GLFW we want to close the window (and quit)
 			aPressed = true;
 			break;
 
 		case GLFW_KEY_D:
+		case GLFW_KEY_RIGHT:
 			// If escape is pressed tell GLFW we want to close the window (and quit)
 			dPressed = true;
 			break;
 
 		case GLFW_KEY_W:
+		case GLFW_KEY_UP:
 			// If escape is pressed tell GLFW we want to close the window (and quit)
 			wPressed = true;
 			break;
 
 		case GLFW_KEY_S:
+		case GLFW_KEY_DOWN:
 			// If escape is pressed tell GLFW we want to close the window (and quit)
 			sPressed = true;
 			break;
@@ -232,6 +245,11 @@ void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, in
 		case GLFW_KEY_SPACE:
 			// If escape is pressed tell GLFW we want to close the window (and quit)
 			spacePressed = true;
+			break;
+
+		case GLFW_KEY_LEFT_SHIFT:
+			// If escape is pressed tell GLFW we want to close the window (and quit)
+			shiftPressed = true;
 			break;
 		default:
 		{
@@ -246,21 +264,25 @@ void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, in
 		switch (key)
 		{
 		case GLFW_KEY_A:
+		case GLFW_KEY_LEFT:
 			// If escape is pressed tell GLFW we want to close the window (and quit)
 			aPressed = false;
 			break;
 
 		case GLFW_KEY_D:
+		case GLFW_KEY_RIGHT:
 			// If escape is pressed tell GLFW we want to close the window (and quit)
 			dPressed = false;
 			break;
 
 		case GLFW_KEY_W:
+		case GLFW_KEY_UP:
 			// If escape is pressed tell GLFW we want to close the window (and quit)
 			wPressed = false;
 			break;
 
-		case GLFW_KEY_S:
+		case GLFW_KEY_S:	
+		case GLFW_KEY_DOWN:
 			// If escape is pressed tell GLFW we want to close the window (and quit)
 			sPressed = false;
 			break;
@@ -269,6 +291,11 @@ void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, in
 			// If escape is pressed tell GLFW we want to close the window (and quit)
 			spacePressed = false;
 			break;
+
+		case GLFW_KEY_LEFT_SHIFT:
+			// If escape is pressed tell GLFW we want to close the window (and quit)
+			shiftPressed = false;
+			break;
 		default:
 		{
 		}
@@ -276,10 +303,60 @@ void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, in
 	}
 }
 
-void keepOnScreen(float viewWidth, float viewHight, GameObject2D* player1)
+void setUpArrays()
 {
-	float width = viewWidth + 2.0f;
-	float height = viewHight + 2.0f;
+	//asteroid objects
+	AstrodsBase* smallAsteroid;
+	AstrodsBase* midAsteroid;
+	AstrodsBase* bigAsteroid;
+	
+	smallAsteroid = new AstrodsBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), smallTextureID, 5, 10, 10.0f, 5.0f, true);
+	midAsteroid = new AstrodsBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), midTextureID, 10, 20, 20.0f, 2.0f, true);
+	bigAsteroid = new AstrodsBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), largTextureID, 20, 40, 40.0f, 0.5f, true);
+
+	//asteroid arrays
+	for (int i = 0; i < 40; i++)
+	{
+		smallSize[i] = smallAsteroid;
+	}
+	for (int j = 0; j < 20; j++)
+	{
+		midSize[j] = midAsteroid;
+	}
+	for (int z = 0; z < 10; z++)
+	{
+		bigSize[z] = bigAsteroid;
+	}
+
+	//projectile objects
+	ProjectilesBase* bullet;
+	ProjectilesBase* enemyBullet;
+	ProjectilesBase* missile;
+
+	bullet = new ProjectilesBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 10, false, 1.0f, 50.0f);
+	enemyBullet = new ProjectilesBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 10, false, 1.0f, 50.0f);
+	missile = new ProjectilesBase(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 50, false, 10.0f, 10.0f);
+
+	//projectile arrays
+	for (int a = 0; a < 35; a++)
+	{
+		bulletArray[a] = bullet;
+	}
+	for (int b = 0; b < 100; b++)
+	{
+		enemyBulletArray[b] = enemyBullet;
+	}
+	for (int c = 0; c < 2; c++)
+	{
+		missileArray[c] = missile;
+	}
+}
+
+
+void keepOnScreen(float viewWidth, float viewHight, PlayerShip* player1)
+{
+	float width = viewWidth + 1.0f;
+	float height = viewHight + 1.0f;
 
 	if (player1->position.x < width && player1->position.x > -width)
 	{
@@ -310,10 +387,9 @@ void ast()
 void makePlayer()
 {
 	
-	player1 = new GameObject2D(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), playerTextureID);
-	addObject("player", player1);
-
-	//InGameObject* ship = new InGameObject("player1_ship", 0.0f, glm::radians(90.0f), 100, 999);
+	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float initOrientationAcceleration, bool initIsShooting
+	playerShip = new PlayerShip(glm::vec2(0.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), playerTextureID, 100, 100, 25.0f, 0.5f, false, 5.0f, false);
+	addObject("player", playerShip);
 
 }
 
@@ -330,19 +406,10 @@ void shootBullet(GameObject2D* player1, double tDelta)
 	//InGameObject* plasma = new InGameObject("bullet", 0.0f, glm::radians(90.0f), 100, 999);
 
 }
-void flyBullet(GameObjectCollection bullet, double tDelta)
-{
-	for (int x = 0; x < bullet.objectCount; x++)
-	{
-		GameObject2D* thisBullet = bullet.objectArray[x];
-		if (thisBullet == nullptr)
-		{
-			continue;
-		}
 
-		thisBullet->position.x += maxBulletSpeed * cos(thisBullet->orientation) * (float)tDelta;
-		thisBullet->position.y += maxBulletSpeed * sin(thisBullet->orientation) * (float)tDelta;
-	}
+void flyBullet(double tDelta)
+{
+	
 
 }
 void bulletOffScreen(float viewWidth, float viewHight)
@@ -350,38 +417,7 @@ void bulletOffScreen(float viewWidth, float viewHight)
 	float width = viewWidth + 2.0f;
 	float height = viewHight + 2.0f;
 
-	GameObjectCollection bullet = getObjectCollection("bullet");
-
-	for (int x = 0; x < bullet.objectCount; x++)
-	{
-		GameObject2D* thisBullet = bullet.objectArray[x];
-
-		if (thisBullet == nullptr)
-		{
-			continue;
-		}
-
-		if (thisBullet->position.x < width && thisBullet->position.x > -width)
-		{
-			if (thisBullet->position.y < height && thisBullet->position.y > -height)
-			{
-				//do nothing
-			}
-			else
-			{
-				deleteObject(thisBullet);
-				return;
-
-			}
-		}
-		else
-		{
-			deleteObject(thisBullet);
-			return;
-
-
-		}
-	}
+	
 }
 
 void spawnAsteroid()
@@ -412,110 +448,3 @@ void spawnAsteroid()
 
 }
 
-void turnAsteroid(double tDelta)
-{
-	GameObjectCollection big = getObjectCollection("big");
-	GameObjectCollection mid = getObjectCollection("mid");
-	GameObjectCollection small = getObjectCollection("small");
-
-	if (big.objectCount == 0 && mid.objectCount == 0 && small.objectCount == 0)
-	{
-		return;
-	}
-	if (big.objectCount != 0)
-	{
-		for (int x = 0; x < big.objectCount; x++)
-		{
-			GameObject2D* thisBig = big.objectArray[x];
-			if (thisBig == nullptr)
-			{
-				continue;
-			}
-			float thetaVelocity = (pi / 180.0f) * maxTurnAsteroid;
-			thisBig->orientation += thetaVelocity * (float)tDelta;
-		}
-	}
-	if (mid.objectCount != 0)
-	{
-		for (int x = 0; x < mid.objectCount; x++)
-		{
-			GameObject2D* thisMid = mid.objectArray[x];
-			if (thisMid == nullptr)
-			{
-				continue;
-			}
-			float thetaVelocity = (pi / 180.0f) * maxTurnAsteroid * 5;
-			thisMid->orientation += thetaVelocity * (float)tDelta;
-		}
-	}
-	if (small.objectCount != 0)
-	{
-		for (int x = 0; x < small.objectCount; x++)
-		{
-			GameObject2D* thisSmall = small.objectArray[x];
-			if (thisSmall == nullptr)
-			{
-				continue;
-			}
-			float thetaVelocity = (pi / 180.0f) * maxTurnAsteroid * 10;
-			thisSmall->orientation += thetaVelocity * (float)tDelta;
-		}
-	}
-}
-
-void moveAsteroid(double tDelta)
-{
-	GameObjectCollection big = getObjectCollection("big");
-	GameObjectCollection mid = getObjectCollection("mid");
-	GameObjectCollection small = getObjectCollection("small");
-	float dx, dy;
-
-	if (big.objectCount == 0 && mid.objectCount == 0 && small.objectCount == 0)
-	{
-		return;
-	}
-	if (big.objectCount != 0)
-	{
-		for (int x = 0; x < big.objectCount; x++)
-		{
-			GameObject2D* thisBig = big.objectArray[x];
-			if (thisBig == nullptr)
-			{
-				continue;
-			}
-
-			dx = maxSpeedAsteroid * cos(thisBig->orientation) * (float)tDelta;// these need to be changed to a fixed angle, for now just using orientation
-			dy = maxSpeedAsteroid * sin(thisBig->orientation) * (float)tDelta;
-
-			thisBig->position.x += dx;
-			thisBig->position.y += dy;
-
-		}
-	}
-	if (mid.objectCount != 0)
-	{
-		for (int x = 0; x < mid.objectCount; x++)
-		{
-			GameObject2D* thisMid = mid.objectArray[x];
-			if (thisMid == nullptr)
-			{
-				continue;
-			}
-			float thetaVelocity = (pi / 180.0f) * maxTurnAsteroid * 5;
-			thisMid->orientation += thetaVelocity * (float)tDelta;
-		}
-	}
-	if (small.objectCount != 0)
-	{
-		for (int x = 0; x < small.objectCount; x++)
-		{
-			GameObject2D* thisSmall = small.objectArray[x];
-			if (thisSmall == nullptr)
-			{
-				continue;
-			}
-			float thetaVelocity = (pi / 180.0f) * maxTurnAsteroid * 10;
-			thisSmall->orientation += thetaVelocity * (float)tDelta;
-		}
-	}
-}
