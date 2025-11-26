@@ -51,7 +51,7 @@ void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, in
 void keepOnScreen(float viewWidth, float viewHight, PlayerShip*);
 void makePlayer();
 
-void shootBullet(GameObject2D*, double tDelta);
+void shootBullet(PlayerShip*, double tDelta);
 void flyBullet(double tDelta);
 void bulletOffScreen(float, float);
 void spawnAsteroid();
@@ -149,7 +149,7 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 		}
 	}
 	
-	flyBullet((float)tDelta);
+	flyBullet(tDelta);
 
 	bulletOffScreen(getViewplaneWidth() / 2.0f, getViewplaneHeight() / 2.0f);
 
@@ -395,15 +395,18 @@ void makePlayer()
 
 
 
-void shootBullet(GameObject2D* player1, double tDelta)
+void shootBullet(PlayerShip* playerShip, double tDelta)
 {
-	
-	//bullet = new GameObject2D(glm::vec2(player1->position.x, player1->position.y), player1->orientation, glm::vec2(2.5f, 2.5f), bulletTextureID);
-	//addObject("bullet", bullet);
-
-	//glm::vec2 temp = glm::vec2(player1->position.x, player1->position.y);
-
-	//InGameObject* plasma = new InGameObject("bullet", 0.0f, glm::radians(90.0f), 100, 999);
+	for (int i = 0; i < 35; i++)
+	{
+		if (bulletArray[i]->getIsDead())
+		{
+			bulletArray[i]->setIsFlying(true);
+			bulletArray[i]->position = playerShip->position;
+			bulletArray[i]->orientation = playerShip->orientation;
+			break;
+		}
+	}
 
 }
 
