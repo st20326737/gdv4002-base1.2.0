@@ -12,6 +12,7 @@ private:
 	float mass;
 	float acceleration;
 	bool isDead;
+	float orinent;
 
 public:
 	AstrodsBase();
@@ -24,6 +25,7 @@ public:
 	float getMass() const;
 	float getAcceleration() const;
 	bool getIsDead() const;
+	float getOrient() const;
 
 	// Setter methods
 	void setDamage(int initDamage);
@@ -31,6 +33,7 @@ public:
 	void setMass(float initMass);
 	void setAcceleration(float initAcceleration);
 	void setIsDead(bool initAlive);
+	float setOrient(float orinent);
 
 };
 

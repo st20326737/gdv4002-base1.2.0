@@ -69,7 +69,7 @@ void setUpLevel();
 void myRenderScene(GLFWwindow* window);
 void movementAsteroids(double tDelta);
 void keepAsteroidsOnScreen(float viewWidth, float viewHight);
-void orientationAsteroids((double)tDelta);
+void orientationAsteroids(double tDelta);
 
 //player ship
 PlayerShip* playerShip;
@@ -450,27 +450,27 @@ void keepAsteroidsOnScreen(float viewWidth, float viewHight)
 }
 
 
-void orientationAsteroids((double)tDelta)
+void orientationAsteroids(double tDelta)
 {
 	for (int i = 0; i < 40; i++)
 	{
 		if (smallSize[i]->getIsDead() == false)
 		{
-			smallSize[i]->orientation += (rand() % (int)(maxTurnAsteroid * 100)) / 100.0f * (float)tDelta;
+			smallSize[i]->orientation += maxTurnAsteroid * (float)tDelta;
 		}
 	}
 	for (int j = 0; j < 20; j++)
 	{
 		if (midSize[j]->getIsDead() == false)
 		{
-			midSize[j]->orientation += (rand() % (int)(maxTurnAsteroid * 100)) / 100.0f * (float)tDelta;
+			midSize[j]->orientation += maxTurnAsteroid * (float)tDelta;
 		}
 	}
 	for (int z = 0; z < 10; z++)
 	{
 		if (bigSize[z]->getIsDead() == false)
 		{
-			bigSize[z]->orientation += (rand() % (int)(maxTurnAsteroid * 100)) / 100.0f * (float)tDelta;
+			bigSize[z]->orientation += maxTurnAsteroid * (float)tDelta;
 		}
 	}
 }
