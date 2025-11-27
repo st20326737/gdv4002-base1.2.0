@@ -318,18 +318,18 @@ void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, in
 void setUpArrays()
 {
 	//asteroid arrays
-	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead
+	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float orientationAcceleration
 	for (int i = 0; i < 40; i++)
 	{
-		smallSize[i] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians(90.0f), glm::vec2(5.0f, 5.0f), smallTextureID, 5, 10, 10.0f, 5.0f, true);
+		smallSize[i] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(5.0f, 5.0f), smallTextureID, 5, 10, 10.0f, 5.0f, true, 1.0f);
 	}
 	for (int j = 0; j < 20; j++)
 	{
-		midSize[j] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians(90.0f), glm::vec2(10.0f, 10.0f), midTextureID, 10, 20, 20.0f, 2.0f, true);
+		midSize[j] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(10.0f, 10.0f), midTextureID, 10, 20, 20.0f, 2.0f, true, 0.5f);
 	}
 	for (int z = 0; z < 10; z++)
 	{
-		bigSize[z] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians(90.0f), glm::vec2(20.0f, 20.0f), largTextureID, 20, 40, 40.0f, 0.5f, true);
+		bigSize[z] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(20.0f, 20.0f), largTextureID, 20, 40, 40.0f, 0.5f, true, 0.1f);
 	}
 
 	//projectile arrays
@@ -456,21 +456,21 @@ void orientationAsteroids(double tDelta)
 	{
 		if (smallSize[i]->getIsDead() == false)
 		{
-			smallSize[i]->orientation += maxTurnAsteroid * (float)tDelta;
+			smallSize[i]->orientation += smallSize[i]->getOrientationAcceleration() * (float)tDelta;
 		}
 	}
 	for (int j = 0; j < 20; j++)
 	{
 		if (midSize[j]->getIsDead() == false)
 		{
-			midSize[j]->orientation += maxTurnAsteroid * (float)tDelta;
+			midSize[j]->orientation += midSize[j]->getOrientationAcceleration() * (float)tDelta;
 		}
 	}
 	for (int z = 0; z < 10; z++)
 	{
 		if (bigSize[z]->getIsDead() == false)
 		{
-			bigSize[z]->orientation += maxTurnAsteroid * (float)tDelta;
+			bigSize[z]->orientation += bigSize[z]->getOrientationAcceleration() * (float)tDelta;
 		}
 	}
 }
@@ -573,8 +573,8 @@ void movementAsteroids(double tDelta)
 	{
 		if (smallSize[i]->getIsDead() == false)
 		{
-			dx = smallSize[i]->getAcceleration() * cos(smallSize[i]->orientation) * (float)tDelta;
-			dy = smallSize[i]->getAcceleration() * sin(smallSize[i]->orientation) * (float)tDelta;
+			dx = smallSize[i]->getAcceleration() * cos(smallSize[i]->getOrient()) * (float)tDelta;
+			dy = smallSize[i]->getAcceleration() * sin(smallSize[i]->getOrient()) * (float)tDelta;
 
 			smallSize[i]->position.x += dx;
 			smallSize[i]->position.y += dy;
@@ -584,8 +584,8 @@ void movementAsteroids(double tDelta)
 	{
 		if (midSize[j]->getIsDead() == false)
 		{
-			dx = midSize[j]->getAcceleration() * cos(midSize[j]->orientation) * (float)tDelta;
-			dy = midSize[j]->getAcceleration() * sin(midSize[j]->orientation) * (float)tDelta;
+			dx = midSize[j]->getAcceleration() * cos(midSize[j]->getOrient()) * (float)tDelta;
+			dy = midSize[j]->getAcceleration() * sin(midSize[j]->getOrient()) * (float)tDelta;
 
 			midSize[j]->position.x += dx;
 			midSize[j]->position.y += dy;
@@ -595,8 +595,8 @@ void movementAsteroids(double tDelta)
 	{
 		if (bigSize[z]->getIsDead() == false)
 		{
-			dx = bigSize[z]->getAcceleration() * cos(bigSize[z]->orientation) * (float)tDelta;
-			dy = bigSize[z]->getAcceleration() * sin(bigSize[z]->orientation) * (float)tDelta;
+			dx = bigSize[z]->getAcceleration() * cos(bigSize[z]->getOrient()) * (float)tDelta;
+			dy = bigSize[z]->getAcceleration() * sin(bigSize[z]->getOrient()) * (float)tDelta;
 
 			bigSize[z]->position.x += dx;
 			bigSize[z]->position.y += dy;

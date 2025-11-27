@@ -12,11 +12,12 @@ private:
 	float mass;
 	float acceleration;
 	bool isDead;
-	float orinent;
+	float orient;
+	float orientationAcceleration;
 
 public:
 	AstrodsBase();
-	AstrodsBase(glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead);
+	AstrodsBase(glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float orientationAcceleration);
 	~AstrodsBase();
 
 	// Getter methods
@@ -26,6 +27,7 @@ public:
 	float getAcceleration() const;
 	bool getIsDead() const;
 	float getOrient() const;
+	float getOrientationAcceleration() const;
 
 	// Setter methods
 	void setDamage(int initDamage);
@@ -33,7 +35,8 @@ public:
 	void setMass(float initMass);
 	void setAcceleration(float initAcceleration);
 	void setIsDead(bool initAlive);
-	float setOrient(float orinent);
+	void setOrient(float orient);
+	void setOrientationAcceleration(float orientationAcceleration);
 
 };
 

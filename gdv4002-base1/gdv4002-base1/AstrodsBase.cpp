@@ -8,9 +8,10 @@ AstrodsBase::AstrodsBase() : GameObject2D()
 	acceleration = 0.0f;
 	isDead = true;
 	orient = 0.0f;
+	orientationAcceleration = 0.0f;
 }
 
-AstrodsBase::AstrodsBase(glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead) : GameObject2D(initPosition, initOrientation, initSize, initTextureID)
+AstrodsBase::AstrodsBase(glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float orientationAcceleration) : GameObject2D(initPosition, initOrientation, initSize, initTextureID)
 {
 
 	setDamage(initDamage);
@@ -19,6 +20,7 @@ AstrodsBase::AstrodsBase(glm::vec2 initPosition, float initOrientation, glm::vec
 	setAcceleration(initAcceleration);
 	setIsDead(initIsDead);
 	setOrient(initOrientation);
+	setOrientationAcceleration(orientationAcceleration);
 
 }
 
@@ -50,7 +52,11 @@ bool AstrodsBase::getIsDead() const
 }
 float AstrodsBase::getOrient() const
 {
-	return this->orinent;
+	return this->orient;
+}
+float AstrodsBase::getOrientationAcceleration() const
+{
+	return this->orientationAcceleration;
 }
 
 // Setter methods
@@ -74,7 +80,11 @@ void AstrodsBase::setIsDead(bool initIsDead)
 {
 	this->isDead = initIsDead;
 }
-void AstrodsBase::setOrient(float orinent)
+void AstrodsBase::setOrient(float orient)
 {
-	this->orinent = orinent;
+	this->orient = orient;
+}
+void AstrodsBase::setOrientationAcceleration(float orientationAcceleration)
+{
+	this->orientationAcceleration = orientationAcceleration;
 }
