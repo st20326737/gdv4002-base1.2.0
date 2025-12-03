@@ -44,13 +44,17 @@ int difficultyPoints = 100;
 int astrodsThatIsDead = 0;
 
 //arrays
-AstrodsBase* smallSize[40];
-AstrodsBase* midSize[20];
-AstrodsBase* bigSize[10];
+AstrodsBase* smallSize[400];
+AstrodsBase* midSize[200];
+AstrodsBase* bigSize[100];
 
 ProjectilesBase* bulletArray[15];
 ProjectilesBase* enemyBulletArray[50];
 ProjectilesBase* missileArray[2];
+
+UFO* alienUFOs[10];
+
+
 
 
 // Function prototypes
@@ -71,11 +75,14 @@ void movementAsteroids(double tDelta);
 void keepAsteroidsOnScreen(float viewWidth, float viewHight);
 void orientationAsteroids(double tDelta);
 
+void bulletHit(double tDelta);
+
 //player ship
 PlayerShip* playerShip;
 
 //texture IDs
 int playerTextureID;
+int UFOTextureID;
 int bulletTextureID;
 int largTextureID;
 int midTextureID;
@@ -103,6 +110,7 @@ int main(void)
 	// Setup game scene objects here
 	//
 	playerTextureID = loadTexture("Resources\\Textures\\player1_ship.png", TextureProperties::NearestFilterTexture());
+	UFOTextureID = loadTexture("Resources\\Textures\\UFO.png", TextureProperties::NearestFilterTexture());
 	bulletTextureID = loadTexture("Resources\\Textures\\bullet.png", TextureProperties::NearestFilterTexture());
 	largTextureID = loadTexture("Resources\\Textures\\larg.png", TextureProperties::NearestFilterTexture());
 	midTextureID = loadTexture("Resources\\Textures\\mid.png", TextureProperties::NearestFilterTexture());
@@ -150,6 +158,9 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 	movementAsteroids((double)tDelta);
 	orientationAsteroids((double)tDelta);
 
+	//check for hits
+	bulletHit((double)tDelta);
+
 	//shoot
 	shoottimer += (float)tDelta;
 
@@ -185,7 +196,7 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 
 	playerShip->orientation += thetaVelocity * (float)tDelta;
 
-	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float initOrientationAcceleration, bool initIsShooting
+
 	//accelerate
 	if (wPressed)
 	{
@@ -218,6 +229,155 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 	playerShip->position.x += dx;
 	playerShip->position.y += dy;
 
+}
+
+void bulletHit(double tDelta)
+{
+	//mass * acceleration = force
+	//therefore the transfur of force to acceleration is force / mass = acceleration
+
+	//oriantation = oriantation + bullet oriantation * tDelta
+
+	float force;
+
+	//handle hit
+	for (int i = 0; i < 15; i++)//bulletArray
+	{
+		for (int j = 0; j < 400; j++)//smallSize
+		{
+			if (bulletArray[i]->getIsDead() == false && smallSize[j]->getIsDead() == false)
+			{
+				float distance = glm::distance(bulletArray[i]->position, smallSize[j]->position);
+				if (distance < 5.0f)//5 is radius of small asteroid + radius of bullet
+				{
+					//hit detected
+					smallSize[j]->setHealth(smallSize[j]->getHealth() - bulletArray[i]->getDamage());
+					bulletArray[i]->setIsDead(true);
+					bulletArray[i]->position = glm::vec2(0.0f, 200.0f);
+					cout << "bullet hit small asteroid at index " << j << endl;
+
+					//change asteroid acceleration
+					force = bulletArray[i]->getMass() * bulletArray[i]->getAcceleration();
+					smallSize[j]->setAcceleration(smallSize[j]->getAcceleration() + (force / smallSize[j]->getMass()));
+
+					//change asteroid oriantation
+					smallSize[j]->setOrient(smallSize[j]->getOrient() + playerShip->orientation * float(tDelta));
+
+					//check if asteroid is destroyed
+					
+					if (smallSize[j]->getHealth() <= 0)
+					{
+						smallSize[j]->setIsDead(true);
+						smallSize[j]->position = glm::vec2(200.0f, 0.0f);
+						cout << "small asteroid destroyed at index " << j << endl;
+					}
+					
+				}
+			}
+		}
+	}
+
+	for (int a = 0; a < 15; a++)//bulletArray
+	{
+		for (int b = 0; b < 200; b++)//midSize
+		{
+			if (bulletArray[a]->getIsDead() == false && midSize[b]->getIsDead() == false)
+			{
+				float distance = glm::distance(bulletArray[a]->position, midSize[b]->position);
+				if (distance < 10.0f)//10 is radius of mid asteroid + radius of bullet
+				{
+					//hit detected
+					midSize[b]->setHealth(midSize[b]->getHealth() - bulletArray[a]->getDamage());
+					bulletArray[a]->setIsDead(true);
+					bulletArray[a]->position = glm::vec2(0.0f, 200.0f);
+					cout << "bullet hit mid asteroid at index " << b << endl;
+
+					//change asteroid acceleration
+					force = bulletArray[a]->getMass() * bulletArray[a]->getAcceleration();
+					midSize[b]->setAcceleration(midSize[b]->getAcceleration() + (force / midSize[b]->getMass()));
+
+					//change asteroid oriantation
+					midSize[b]->setOrient(midSize[b]->getOrient() + playerShip->orientation * float(tDelta));
+
+					//check if asteroid is destroyed
+					if (midSize[b]->getHealth() <= 0)
+					{
+						midSize[b]->setIsDead(true);
+						midSize[b]->position = glm::vec2(200.0f, 0.0f);
+						cout << "mid asteroid destroyed at index " << b << endl;
+					}
+				}
+			}
+		}
+		
+	}
+
+	for (int z = 0; z < 15; z++)//bulletArray
+	{
+		for (int y = 0; y < 100; y++)//bigSize
+		{
+			if (bulletArray[z]->getIsDead() == false && bigSize[y]->getIsDead() == false)
+			{
+				float distance = glm::distance(bulletArray[z]->position, bigSize[y]->position);
+				if (distance < 5.0f)//5 is radius of small asteroid + radius of bullet
+				{
+					//hit detected
+					bigSize[y]->setHealth(bigSize[y]->getHealth() - bulletArray[z]->getDamage());
+					bulletArray[z]->setIsDead(true);
+					bulletArray[z]->position = glm::vec2(0.0f, 200.0f);
+					cout << "bullet hit small asteroid at index " << y << endl;
+
+					//change asteroid acceleration
+					force = bulletArray[z]->getMass() * bulletArray[z]->getAcceleration();
+					bigSize[y]->setAcceleration(bigSize[y]->getAcceleration() + (force / bigSize[y]->getMass()));
+
+					//change asteroid oriantation
+					// 
+					// idk how to do this yet
+					// 
+					//bigSize[y]->setOrient(bigSize[y]->getOrient() + playerShip->orientation * float(tDelta));
+					//glm::vec2 bulDir = glm::vec2(cos(bulletArray[z]->orientation), sin(bulletArray[z]->orientation));
+					//glm::vec2 astDir = glm::vec2(cos(bigSize[y]->orientation), sin(bigSize[y]->orientation));
+
+					//glm::vec2 normalDir = glm::normalize(bulDir - astDir);
+
+
+					//check if asteroid is destroyed
+					if (bigSize[y]->getHealth() <= 0)
+					{
+						bigSize[y]->setIsDead(true);
+						bigSize[y]->position = glm::vec2(200.0f, 0.0f);
+						cout << "small asteroid destroyed at index " << y << endl;
+					}
+				}
+			}
+		}
+	}
+	for (int e = 0; e < 15; e++)//bulletArray
+	{
+		for (int f = 0; f < 10; f++)//uFOs
+		{
+			if (bulletArray[e]->getIsDead() == false && alienUFOs[f]->getIsDead() == false)
+			{
+				float distance = glm::distance(bulletArray[e]->position, alienUFOs[f]->position);
+				if (distance < 5.0f)//5 is radius of small asteroid + radius of bullet
+				{
+					//hit detected
+					alienUFOs[f]->setHealth(alienUFOs[f]->getHealth() - bulletArray[e]->getDamage());
+					bulletArray[e]->setIsDead(true);
+					bulletArray[e]->position = glm::vec2(0.0f, 200.0f);
+					cout << "bullet hit small asteroid at index " << f << endl;
+
+					if (alienUFOs[f]->getHealth() <= 0)
+					{
+						alienUFOs[f]->setIsDead(true);
+						alienUFOs[f]->position = glm::vec2(200.0f, 0.0f);
+						cout << "small asteroid destroyed at index " << f << endl;
+					}
+				}
+			}
+		}
+	}
 }
 
 
@@ -319,15 +479,15 @@ void setUpArrays()
 {
 	//asteroid arrays
 	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float orientationAcceleration
-	for (int i = 0; i < 40; i++)
+	for (int i = 0; i < 400; i++)
 	{
 		smallSize[i] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(5.0f, 5.0f), smallTextureID, 5, 10, 10.0f, 5.0f, true, 1.0f);
 	}
-	for (int j = 0; j < 20; j++)
+	for (int j = 0; j < 200; j++)
 	{
 		midSize[j] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(10.0f, 10.0f), midTextureID, 10, 20, 20.0f, 2.0f, true, 0.5f);
 	}
-	for (int z = 0; z < 10; z++)
+	for (int z = 0; z < 100; z++)
 	{
 		bigSize[z] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(20.0f, 20.0f), largTextureID, 20, 40, 40.0f, 0.5f, true, 0.1f);
 	}
@@ -347,6 +507,12 @@ void setUpArrays()
 	for (int c = 0; c < 2; c++)
 	{
 		missileArray[c] = new ProjectilesBase(glm::vec2(0.0f, 200.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 50, true, 10.0f, 50.0f);
+	}
+
+	//UFO array
+	for (int y = 0; y < 10; y++)//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float initorientationSpeed, bool initIsShooting
+	{
+		alienUFOs[y] = new UFO(glm::vec2(200.0f, 200.0f), glm::radians(glm::radians(90.0f)), glm::vec2(5.0f, 5.0f), UFOTextureID, 15, 500, 50.0f, 10.0f, true, 5.0f, false);
 	}
 }
 
@@ -380,7 +546,7 @@ void keepAsteroidsOnScreen(float viewWidth, float viewHight)
 {
 	float width = viewWidth;
 	float height = viewHight;
-	for (int i = 0; i < 40; i++)
+	for (int i = 0; i < 400; i++)
 	{
 		if (smallSize[i]->getIsDead() == false)//5
 		{
@@ -403,7 +569,7 @@ void keepAsteroidsOnScreen(float viewWidth, float viewHight)
 			}
 		}
 	}
-	for (int j = 0; j < 20; j++)
+	for (int j = 0; j < 200; j++)
 	{
 		if (midSize[j]->getIsDead() == false)//10
 		{
@@ -415,7 +581,7 @@ void keepAsteroidsOnScreen(float viewWidth, float viewHight)
 			{
 				midSize[j]->position.x *= -1.0f;
 			}
-			if (midSize[j]->position.y - 5 < height && midSize[j]->position.y + 5> -height)
+			if (midSize[j]->position.y - 5 < height && midSize[j]->position.y + 5 > -height)
 			{
 				//do nothing
 			}
@@ -425,11 +591,11 @@ void keepAsteroidsOnScreen(float viewWidth, float viewHight)
 			}
 		}
 	}
-	for (int z = 0; z < 10; z++)
+	for (int z = 0; z < 100; z++)
 	{
 		if (bigSize[z]->getIsDead() == false)//20
 		{
-			if (bigSize[z]->position.x - 10 < width && bigSize[z]->position.x + 10 > -width)
+			if (bigSize[z]->position.x - 7 < width && bigSize[z]->position.x + 7 > -width)
 			{
 				//do nothing
 			}
@@ -437,7 +603,7 @@ void keepAsteroidsOnScreen(float viewWidth, float viewHight)
 			{
 				bigSize[z]->position.x *= -1.0f;
 			}
-			if (bigSize[z]->position.y - 10 < height && bigSize[z]->position.y +10 > -height)
+			if (bigSize[z]->position.y - 7 < height && bigSize[z]->position.y + 7 > -height)
 			{
 				//do nothing
 			}
@@ -447,26 +613,48 @@ void keepAsteroidsOnScreen(float viewWidth, float viewHight)
 			}
 		}
 	}
+	for (int e = 0; e < 10; e++)
+	{
+		if (alienUFOs[e]->getIsDead() == false)//20
+		{
+			if (alienUFOs[e]->position.x - 5 < width && alienUFOs[e]->position.x + 5 > -width)
+			{
+				//do nothing
+			}
+			else
+			{
+				alienUFOs[e]->position.x *= -1.0f;
+			}
+			if (alienUFOs[e]->position.y - 5 < height && alienUFOs[e]->position.y + 5 > -height)
+			{
+				//do nothing
+			}
+			else
+			{
+				alienUFOs[e]->position.y *= -1.0f;
+			}
+		}
+	}
 }
 
 
 void orientationAsteroids(double tDelta)
 {
-	for (int i = 0; i < 40; i++)
+	for (int i = 0; i < 400; i++)
 	{
 		if (smallSize[i]->getIsDead() == false)
 		{
 			smallSize[i]->orientation += smallSize[i]->getOrientationAcceleration() * (float)tDelta;
 		}
 	}
-	for (int j = 0; j < 20; j++)
+	for (int j = 0; j < 200; j++)
 	{
 		if (midSize[j]->getIsDead() == false)
 		{
 			midSize[j]->orientation += midSize[j]->getOrientationAcceleration() * (float)tDelta;
 		}
 	}
-	for (int z = 0; z < 10; z++)
+	for (int z = 0; z < 100; z++)
 	{
 		if (bigSize[z]->getIsDead() == false)
 		{
@@ -479,21 +667,21 @@ void setUpLevel()
 {
 	astrodsThatIsDead = 0;
 	
-	for (int i = 0; i < 40; i++)
+	for (int i = 0; i < 400; i++)
 	{
 		if (smallSize[i]->getIsDead() == true) 
 		{
 			astrodsThatIsDead += 1;
 		}
 	}
-	for (int j = 0; j < 20; j++)
+	for (int j = 0; j < 200; j++)
 	{
 		if (midSize[j]->getIsDead() == true)
 		{
 			astrodsThatIsDead += 1;
 		}
 	}
-	for (int z = 0; z < 10; z++)
+	for (int z = 0; z < 100; z++)
 	{
 		if (bigSize[z]->getIsDead() == true)
 		{
@@ -501,7 +689,7 @@ void setUpLevel()
 		}
 	}
 
-	if (astrodsThatIsDead >= 70)
+	if (astrodsThatIsDead >= 700)
 	{
 		level += 1;
 		cout << "Level up! Current level: " << level << endl;
@@ -513,63 +701,182 @@ void setUpLevel()
 void spawnAsteroid()
 {
 	int type;
+	float temp1;
+	float temp2;
+	difficultyPoints = 100;
 	difficultyPoints *= level;
 	while (difficultyPoints > 0)
 	{
-		printf("%d\n", difficultyPoints);
-		type = rand() % 3;
-		if (type == 0)
+		temp1 = 0.0f;
+		temp2 = 0.0f;
+		printf("difficultyPoints is %d\n", difficultyPoints);
+
+		if (level < 5)
 		{
-			//spawn big asteroid
-			for (int z = 0; z < 10; z++)
+			type = rand() % 3;
+			if (type == 0)
 			{
-				if(bigSize[z]->getIsDead())
+				//spawn big asteroid
+				for (int z = 0; z < 100; z++)
 				{
-					bigSize[z]->setIsDead(false);
-					difficultyPoints -= bigSize[z]->getHealth();
-					bigSize[z]->position = glm::vec2((float)(rand() % 100 - 50), (float)(rand() % 100 - 50));
-					bigSize[z]->orientation = glm::radians((float)(rand() % 360));
-					break;
+					if (bigSize[z]->getIsDead())
+					{
+						bigSize[z]->setIsDead(false);
+						difficultyPoints -= bigSize[z]->getHealth();
+
+						while (temp1 >= -40 && temp1 <= 40 && temp2 >= -40 && temp2 <= 40)
+						{
+							temp1 = (float)(rand() % 100 - 50);
+							temp2 = (float)(rand() % 100 - 50);
+						}
+
+						bigSize[z]->position = glm::vec2(temp1, temp2);
+						bigSize[z]->orientation = glm::radians((float)(rand() % 360));
+						bigSize[z]->setHealth(40);
+						break;
+					}
+				}
+
+			}
+			else if (type == 1)
+			{
+				//spawn mid asteroid
+				for (int j = 0; j < 200; j++)
+				{
+					if (midSize[j]->getIsDead())
+					{
+						midSize[j]->setIsDead(false);
+						difficultyPoints -= midSize[j]->getHealth();
+						while (temp1 >= -45 && temp1 <= 45 && temp2 >= -45 && temp2 <= 45)
+						{
+							temp1 = (float)(rand() % 100 - 50);
+							temp2 = (float)(rand() % 100 - 50);
+						}
+
+						midSize[j]->position = glm::vec2(temp1, temp2);
+						midSize[j]->orientation = glm::radians((float)(rand() % 360));
+						midSize[j]->setHealth(20);
+						break;
+					}
 				}
 			}
-			
-		}
-		else if (type == 1)
-		{
-			//spawn mid asteroid
-			for (int j = 0; j < 20; j++)
+			else
 			{
-				if(midSize[j]->getIsDead())
+				//spawn small asteroid
+				for (int i = 0; i < 400; i++)
 				{
-					midSize[j]->setIsDead(false);
-					difficultyPoints -= midSize[j]->getHealth();
-					midSize[j]->position = glm::vec2((float)(rand() % 100 - 50), (float)(rand() % 100 - 50));
-					midSize[j]->orientation = glm::radians((float)(rand() % 360));
-					break;
+					if (smallSize[i]->getIsDead())
+					{
+						smallSize[i]->setIsDead(false);
+						difficultyPoints -= smallSize[i]->getHealth();
+						while (temp1 >= -45 && temp1 <= 45 && temp2 >= -45 && temp2 <= 45)
+						{
+							temp1 = (float)(rand() % 100 - 50);
+							temp2 = (float)(rand() % 100 - 50);
+						}
+
+						smallSize[i]->position = glm::vec2(temp1, temp2);
+						smallSize[i]->orientation = glm::radians((float)(rand() % 360));
+						smallSize[i]->setHealth(10);
+						break;
+					}
 				}
 			}
 		}
 		else
 		{
-			//spawn small asteroid
-			for (int i = 0; i < 40; i++)
+			type = rand() % 4;
+			if (type == 0)
 			{
-				if(smallSize[i]->getIsDead())
+				//spawn big asteroid
+				for (int z = 0; z < 100; z++)
 				{
-					smallSize[i]->setIsDead(false);
-					difficultyPoints -= smallSize[i]->getHealth();
-					smallSize[i]->position = glm::vec2((float)(rand() % 100 - 50), (float)(rand() % 100 - 50));
-					smallSize[i]->orientation = glm::radians((float)(rand() % 360));
-					break;
+					if (bigSize[z]->getIsDead())
+					{
+						bigSize[z]->setIsDead(false);
+						difficultyPoints -= bigSize[z]->getHealth();
+						while (temp1 >= -50 && temp1 <= 50 && temp2 >= -50 && temp2 <= 50)
+						{
+							temp1 = (float)(rand() % 120 - 60);
+							temp2 = (float)(rand() % 120 - 60);
+						}
+
+						bigSize[z]->position = glm::vec2(temp1, temp2);
+						bigSize[z]->orientation = glm::radians((float)(rand() % 360));
+						bigSize[z]->setHealth(40);
+						break;
+					}
+				}
+
+			}
+			else if (type == 1)
+			{
+				//spawn mid asteroid
+				for (int j = 0; j < 200; j++)
+				{
+					if (midSize[j]->getIsDead())
+					{
+						midSize[j]->setIsDead(false);
+						difficultyPoints -= midSize[j]->getHealth();
+						while (temp1 >= -50 && temp1 <= 50 && temp2 >= -50 && temp2 <= 50)
+						{
+							temp1 = (float)(rand() % 120 - 60);
+							temp2 = (float)(rand() % 120 - 60);
+						}
+
+						midSize[j]->position = glm::vec2(temp1, temp2);
+						midSize[j]->orientation = glm::radians((float)(rand() % 360));
+						midSize[j]->setHealth(20);
+						break;
+					}
+				}
+			}
+			else if (type == 2)
+			{
+				//spawn small asteroid
+				for (int i = 0; i < 400; i++)
+				{
+					if (smallSize[i]->getIsDead())
+					{
+						smallSize[i]->setIsDead(false);
+						difficultyPoints -= smallSize[i]->getHealth();
+						while (temp1 >= -50 && temp1 <= 50 && temp2 >= -50 && temp2 <= 50)
+						{
+							temp1 = (float)(rand() % 120 - 60);
+							temp2 = (float)(rand() % 120 - 60);
+						}
+
+						smallSize[i]->position = glm::vec2(temp1, temp2);
+						smallSize[i]->orientation = glm::radians((float)(rand() % 360));
+						smallSize[i]->setHealth(10);
+						break;
+					}
+				}
+			}
+			else
+			{
+				//spawn alien UFO
+				for (int y = 0; y < 10; y++)
+				{
+					if (alienUFOs[y]->getIsDead())
+					{
+						alienUFOs[y]->setIsDead(false);
+						difficultyPoints -= alienUFOs[y]->getHealth();
+						alienUFOs[y]->position = glm::vec2((float)(rand() % 100 - 50), (float)(rand() % 100 - 50));
+						alienUFOs[y]->orientation = glm::radians((float)(rand() % 360));
+						break;
+					}
 				}
 			}
 		}
+
+		
 	}
 }
 
 void movementAsteroids(double tDelta)
 {
-	for (int i = 0; i < 40; i++)
+	for (int i = 0; i < 400; i++)
 	{
 		if (smallSize[i]->getIsDead() == false)
 		{
@@ -580,7 +887,7 @@ void movementAsteroids(double tDelta)
 			smallSize[i]->position.y += dy;
 		}
 	}
-	for (int j = 0; j < 20; j++)
+	for (int j = 0; j < 200; j++)
 	{
 		if (midSize[j]->getIsDead() == false)
 		{
@@ -591,7 +898,7 @@ void movementAsteroids(double tDelta)
 			midSize[j]->position.y += dy;
 		}
 	}
-	for (int z = 0; z < 10; z++)
+	for (int z = 0; z < 100; z++)
 	{
 		if (bigSize[z]->getIsDead() == false)
 		{
@@ -676,7 +983,7 @@ void myRenderScene(GLFWwindow* window)
 	playerShip->render();
 
 	// Render asteroids
-	for (int i = 0; i < 40; i++)
+	for (int i = 0; i < 400; i++)
 	{
 		if (smallSize[i]->getIsDead())
 		{
@@ -684,7 +991,7 @@ void myRenderScene(GLFWwindow* window)
 		}
 		smallSize[i]->render();
 	}
-	for (int j = 0; j < 20; j++)
+	for (int j = 0; j < 200; j++)
 	{
 		if (midSize[j]->getIsDead())
 		{
@@ -692,7 +999,7 @@ void myRenderScene(GLFWwindow* window)
 		}
 		midSize[j]->render();
 	}
-	for (int z = 0; z < 10; z++)
+	for (int z = 0; z < 100; z++)
 	{
 		if (bigSize[z]->getIsDead())
 		{
@@ -725,6 +1032,16 @@ void myRenderScene(GLFWwindow* window)
 			continue;
 		}
 		missileArray[c]->render();
+	}
+
+	// Render UFOs
+	for (int y = 0; y < 10; y++)
+	{
+		if (alienUFOs[y]->getIsDead())
+		{
+			continue;
+		}
+		alienUFOs[y]->render();
 	}
 }
 
