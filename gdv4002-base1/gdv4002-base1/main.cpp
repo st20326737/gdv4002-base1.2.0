@@ -332,6 +332,8 @@ void bulletHit(double tDelta)
 					bigSize[y]->setAcceleration(bigSize[y]->getAcceleration() + (force / bigSize[y]->getMass()));
 
 					//change asteroid oriantation
+					
+					
 					// 
 					// idk how to do this yet
 					// 
@@ -478,22 +480,22 @@ void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, in
 void setUpArrays()
 {
 	//asteroid arrays
-	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float orientationAcceleration
+	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass(kg), float initAcceleration, bool initIsDead, float orientationAcceleration
 	for (int i = 0; i < 400; i++)
 	{
-		smallSize[i] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(5.0f, 5.0f), smallTextureID, 5, 10, 10.0f, 5.0f, true, 1.0f);
+		smallSize[i] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(5.0f, 5.0f), smallTextureID, 5, 10, 1000.0f, 5.0f, true, 1.0f, 0.0f);
 	}
 	for (int j = 0; j < 200; j++)
 	{
-		midSize[j] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(10.0f, 10.0f), midTextureID, 10, 20, 20.0f, 2.0f, true, 0.5f);
+		midSize[j] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(10.0f, 10.0f), midTextureID, 10, 20, 2000.0f, 2.0f, true, 0.5f, 0.0f);
 	}
 	for (int z = 0; z < 100; z++)
 	{
-		bigSize[z] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(20.0f, 20.0f), largTextureID, 20, 40, 40.0f, 0.5f, true, 0.1f);
+		bigSize[z] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(20.0f, 20.0f), largTextureID, 20, 40, 4000.0f, 0.5f, true, 0.1f, 0.0f);
 	}
 
 	//projectile arrays
-	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, bool initIsDead, float initMass, float initAcceleration
+	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, bool initIsDead, float initMass(kg), float initAcceleration
 	for (int a = 0; a < 15; a++)
 	{
 		bulletArray[a] = new ProjectilesBase(glm::vec2(0.0f, 200.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 10, true, 1.0f, 250.0f);
@@ -717,6 +719,7 @@ void spawnAsteroid()
 			if (type == 0)
 			{
 				//spawn big asteroid
+				//glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(5.0f, 5.0f), smallTextureID, 5, 10, 1000.0f, 5.0f, true, 1.0f
 				for (int z = 0; z < 100; z++)
 				{
 					if (bigSize[z]->getIsDead())
@@ -732,6 +735,9 @@ void spawnAsteroid()
 
 						bigSize[z]->position = glm::vec2(temp1, temp2);
 						bigSize[z]->orientation = glm::radians((float)(rand() % 360));
+						bigSize[z]->setOrient(glm::radians((float)(rand() % 360)));
+						bigSize[z]->setAcceleration(0.5f);
+						bigSize[z]->setVelocity(bigSize[z]->getAcceleration());
 						bigSize[z]->setHealth(40);
 						break;
 					}
@@ -755,6 +761,9 @@ void spawnAsteroid()
 
 						midSize[j]->position = glm::vec2(temp1, temp2);
 						midSize[j]->orientation = glm::radians((float)(rand() % 360));
+						midSize[j]->setOrient(glm::radians((float)(rand() % 360)));
+						midSize[j]->setAcceleration(2.0f);
+						midSize[j]->setVelocity(midSize[j]->getAcceleration());
 						midSize[j]->setHealth(20);
 						break;
 					}
@@ -777,6 +786,9 @@ void spawnAsteroid()
 
 						smallSize[i]->position = glm::vec2(temp1, temp2);
 						smallSize[i]->orientation = glm::radians((float)(rand() % 360));
+						smallSize[i]->setOrient(glm::radians((float)(rand() % 360)));
+						smallSize[i]->setAcceleration(5.0f);
+						smallSize[i]->setVelocity(smallSize[i]->getAcceleration());
 						smallSize[i]->setHealth(10);
 						break;
 					}
@@ -880,8 +892,8 @@ void movementAsteroids(double tDelta)
 	{
 		if (smallSize[i]->getIsDead() == false)
 		{
-			dx = smallSize[i]->getAcceleration() * cos(smallSize[i]->getOrient()) * (float)tDelta;
-			dy = smallSize[i]->getAcceleration() * sin(smallSize[i]->getOrient()) * (float)tDelta;
+			dx = smallSize[i]->getVelocity() * cos(smallSize[i]->getOrient()) * (float)tDelta;
+			dy = smallSize[i]->getVelocity() * sin(smallSize[i]->getOrient()) * (float)tDelta;
 
 			smallSize[i]->position.x += dx;
 			smallSize[i]->position.y += dy;
@@ -891,8 +903,8 @@ void movementAsteroids(double tDelta)
 	{
 		if (midSize[j]->getIsDead() == false)
 		{
-			dx = midSize[j]->getAcceleration() * cos(midSize[j]->getOrient()) * (float)tDelta;
-			dy = midSize[j]->getAcceleration() * sin(midSize[j]->getOrient()) * (float)tDelta;
+			dx = midSize[j]->getVelocity() * cos(midSize[j]->getOrient()) * (float)tDelta;
+			dy = midSize[j]->getVelocity() * sin(midSize[j]->getOrient()) * (float)tDelta;
 
 			midSize[j]->position.x += dx;
 			midSize[j]->position.y += dy;
@@ -902,8 +914,8 @@ void movementAsteroids(double tDelta)
 	{
 		if (bigSize[z]->getIsDead() == false)
 		{
-			dx = bigSize[z]->getAcceleration() * cos(bigSize[z]->getOrient()) * (float)tDelta;
-			dy = bigSize[z]->getAcceleration() * sin(bigSize[z]->getOrient()) * (float)tDelta;
+			dx = bigSize[z]->getVelocity() * cos(bigSize[z]->getOrient()) * (float)tDelta;
+			dy = bigSize[z]->getVelocity() * sin(bigSize[z]->getOrient()) * (float)tDelta;
 
 			bigSize[z]->position.x += dx;
 			bigSize[z]->position.y += dy;
