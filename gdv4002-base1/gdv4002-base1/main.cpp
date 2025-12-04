@@ -35,7 +35,7 @@ float forwardVelocity = 0.0f;//- = back, + = front
 float forwardAcceleration = 0.5f; // degrees per second squared
 float dx = 0.0f;
 float dy = 0.0f;
-float shootCooldown = 0.05f;
+float shootCooldown = 1.05f;
 float shoottimer = 1.0f;
 float maxTurnAsteroid = 5.0f;
 float maxSpeedAsteroid = 5.0f;
@@ -58,6 +58,7 @@ UFO* alienUFOs[10];
 
 
 // Function prototypes
+void impactVelocity(ProjectilesBase* bullet, AstrodsBase* asteroid);
 void myUpdateScene(GLFWwindow* window, double tDelta);
 void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, int mods);
 void keepOnScreen(float viewWidth, float viewHight, PlayerShip*);
@@ -216,6 +217,15 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 		{
 			forwardVelocity += forwardAcceleration;
 		}
+
+		if (turnVelocity > 0)
+		{
+			turnVelocity -= turnAcceleration;
+		}
+		else if (turnVelocity < 0)
+		{
+			turnVelocity += forwardAcceleration;
+		}
 	}
 
 	if (fabs(forwardVelocity) > maxSpeed)
@@ -238,7 +248,8 @@ void bulletHit(double tDelta)
 
 	//oriantation = oriantation + bullet oriantation * tDelta
 
-	float force;
+	float force1, force2, temp;
+	glm::vec2 dirt1, dirt2;
 
 	//handle hit
 	for (int i = 0; i < 15; i++)//bulletArray
@@ -254,14 +265,11 @@ void bulletHit(double tDelta)
 					smallSize[j]->setHealth(smallSize[j]->getHealth() - bulletArray[i]->getDamage());
 					bulletArray[i]->setIsDead(true);
 					bulletArray[i]->position = glm::vec2(0.0f, 200.0f);
+					cout << "  " << endl;
 					cout << "bullet hit small asteroid at index " << j << endl;
 
-					//change asteroid acceleration
-					force = bulletArray[i]->getMass() * bulletArray[i]->getAcceleration();
-					smallSize[j]->setAcceleration(smallSize[j]->getAcceleration() + (force / smallSize[j]->getMass()));
-
-					//change asteroid oriantation
-					smallSize[j]->setOrient(smallSize[j]->getOrient() + playerShip->orientation * float(tDelta));
+					// Change impact velocity
+					impactVelocity(bulletArray[i], smallSize[j]);
 
 					//check if asteroid is destroyed
 					
@@ -290,14 +298,10 @@ void bulletHit(double tDelta)
 					midSize[b]->setHealth(midSize[b]->getHealth() - bulletArray[a]->getDamage());
 					bulletArray[a]->setIsDead(true);
 					bulletArray[a]->position = glm::vec2(0.0f, 200.0f);
+					cout << "  " << endl;
 					cout << "bullet hit mid asteroid at index " << b << endl;
 
-					//change asteroid acceleration
-					force = bulletArray[a]->getMass() * bulletArray[a]->getAcceleration();
-					midSize[b]->setAcceleration(midSize[b]->getAcceleration() + (force / midSize[b]->getMass()));
-
-					//change asteroid oriantation
-					midSize[b]->setOrient(midSize[b]->getOrient() + playerShip->orientation * float(tDelta));
+					impactVelocity(bulletArray[a], midSize[b]);
 
 					//check if asteroid is destroyed
 					if (midSize[b]->getHealth() <= 0)
@@ -325,31 +329,17 @@ void bulletHit(double tDelta)
 					bigSize[y]->setHealth(bigSize[y]->getHealth() - bulletArray[z]->getDamage());
 					bulletArray[z]->setIsDead(true);
 					bulletArray[z]->position = glm::vec2(0.0f, 200.0f);
-					cout << "bullet hit small asteroid at index " << y << endl;
+					cout << "  " << endl;
+					cout << "bullet hit big asteroid at index " << y << endl;
 
-					//change asteroid acceleration
-					force = bulletArray[z]->getMass() * bulletArray[z]->getAcceleration();
-					bigSize[y]->setAcceleration(bigSize[y]->getAcceleration() + (force / bigSize[y]->getMass()));
-
-					//change asteroid oriantation
-					
-					
-					// 
-					// idk how to do this yet
-					// 
-					//bigSize[y]->setOrient(bigSize[y]->getOrient() + playerShip->orientation * float(tDelta));
-					//glm::vec2 bulDir = glm::vec2(cos(bulletArray[z]->orientation), sin(bulletArray[z]->orientation));
-					//glm::vec2 astDir = glm::vec2(cos(bigSize[y]->orientation), sin(bigSize[y]->orientation));
-
-					//glm::vec2 normalDir = glm::normalize(bulDir - astDir);
-
+					impactVelocity(bulletArray[z], bigSize[y]);
 
 					//check if asteroid is destroyed
 					if (bigSize[y]->getHealth() <= 0)
 					{
 						bigSize[y]->setIsDead(true);
 						bigSize[y]->position = glm::vec2(200.0f, 0.0f);
-						cout << "small asteroid destroyed at index " << y << endl;
+						cout << "small big destroyed at index " << y << endl;
 					}
 				}
 			}
@@ -368,6 +358,7 @@ void bulletHit(double tDelta)
 					alienUFOs[f]->setHealth(alienUFOs[f]->getHealth() - bulletArray[e]->getDamage());
 					bulletArray[e]->setIsDead(true);
 					bulletArray[e]->position = glm::vec2(0.0f, 200.0f);
+					cout << "  " << endl;
 					cout << "bullet hit small asteroid at index " << f << endl;
 
 					if (alienUFOs[f]->getHealth() <= 0)
@@ -382,6 +373,45 @@ void bulletHit(double tDelta)
 	}
 }
 
+void impactVelocity(ProjectilesBase* bullet, AstrodsBase* asteroid) 
+{
+
+	
+	//change asteroid acceleration
+	float force1 = bullet->getMass() * bullet->getAcceleration();
+
+	//dot product to get direction
+	glm::vec2 dirt1 = bullet->getDir();
+	glm::vec2 dirt2 = asteroid->getDir();
+	float temp = glm::dot(glm::normalize(dirt1), glm::normalize(dirt2));
+	force1 *= temp * 10.0f;
+
+	float a = force1 / asteroid->getMass();
+	float v = asteroid->getVelocity() + a;
+	asteroid->setVelocity(v);
+	
+
+	
+	//change asteroid oriantation
+
+	if ((asteroid->getOrient() + glm::radians(180.0f)) > bullet->orientation)
+	{
+		asteroid->setOrient(asteroid->getOrient() + bullet->orientation * 0.5);
+	}
+	else
+	{
+		asteroid->setOrient(asteroid->getOrient() - bullet->orientation * 0.5);
+	}
+	
+	cout << "a: " << a << endl;
+	cout << "v: " << v << endl;
+	cout << "bullet orientation: " << bullet->orientation << endl;
+	cout << "playerShip old orientation: " << playerShip->orientation << endl;
+	cout << "Asteroid new Orient: " << asteroid->getOrient() << endl;
+	cout << "Asteroid new Velocity: " << asteroid->getVelocity() << endl;
+	
+	
+}
 
 void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -483,32 +513,32 @@ void setUpArrays()
 	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass(kg), float initAcceleration, bool initIsDead, float orientationAcceleration
 	for (int i = 0; i < 400; i++)
 	{
-		smallSize[i] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(5.0f, 5.0f), smallTextureID, 5, 10, 1000.0f, 5.0f, true, 1.0f, 0.0f);
+		smallSize[i] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(5.0f, 5.0f), smallTextureID, 5, 10, 100.0f, 5.0f, true, 1.0f, 0.0f, glm::vec2(0.0f,0.0f));
 	}
 	for (int j = 0; j < 200; j++)
 	{
-		midSize[j] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(10.0f, 10.0f), midTextureID, 10, 20, 2000.0f, 2.0f, true, 0.5f, 0.0f);
+		midSize[j] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(10.0f, 10.0f), midTextureID, 10, 20, 200.0f, 2.0f, true, 0.5f, 0.0f, glm::vec2(0.0f, 0.0f));
 	}
 	for (int z = 0; z < 100; z++)
 	{
-		bigSize[z] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(20.0f, 20.0f), largTextureID, 20, 40, 4000.0f, 0.5f, true, 0.1f, 0.0f);
+		bigSize[z] = new AstrodsBase(glm::vec2(200.0f, 0.0f), glm::radians((float)(rand() % 360)), glm::vec2(20.0f, 20.0f), largTextureID, 20, 40, 400.0f, 0.5f, true, 0.1f, 0.0f, glm::vec2(0.0f, 0.0f));
 	}
 
 	//projectile arrays
 	//glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, bool initIsDead, float initMass(kg), float initAcceleration
 	for (int a = 0; a < 15; a++)
 	{
-		bulletArray[a] = new ProjectilesBase(glm::vec2(0.0f, 200.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 10, true, 1.0f, 250.0f);
+		bulletArray[a] = new ProjectilesBase(glm::vec2(0.0f, 200.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 10, true, 1.0f, 250.0f, glm::vec2(0.0f, 0.0f));
 		cout << "bullet array set up at index " << a << endl;
 		cout << a << ": " << bulletArray[a]->getIsDead() << endl;
 	}
 	for (int b = 0; b < 50; b++)
 	{
-		enemyBulletArray[b] = new ProjectilesBase(glm::vec2(0.0f, 200.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 10, true, 1.0f, 250.0f);
+		enemyBulletArray[b] = new ProjectilesBase(glm::vec2(0.0f, 200.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 10, true, 1.0f, 250.0f, glm::vec2(0.0f, 0.0f));
 	}
 	for (int c = 0; c < 2; c++)
 	{
-		missileArray[c] = new ProjectilesBase(glm::vec2(0.0f, 200.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 50, true, 10.0f, 50.0f);
+		missileArray[c] = new ProjectilesBase(glm::vec2(0.0f, 200.0f), glm::radians(90.0f), glm::vec2(2.5f, 2.5f), bulletTextureID, 50, true, 10.0f, 50.0f, glm::vec2(0.0f, 0.0f));
 	}
 
 	//UFO array
@@ -738,7 +768,8 @@ void spawnAsteroid()
 						bigSize[z]->setOrient(glm::radians((float)(rand() % 360)));
 						bigSize[z]->setAcceleration(0.5f);
 						bigSize[z]->setVelocity(bigSize[z]->getAcceleration());
-						bigSize[z]->setHealth(40);
+						bigSize[z]->setDir(glm::vec2(0.0f, 0.0f));
+						bigSize[z]->setHealth(4000);
 						break;
 					}
 				}
@@ -764,7 +795,8 @@ void spawnAsteroid()
 						midSize[j]->setOrient(glm::radians((float)(rand() % 360)));
 						midSize[j]->setAcceleration(2.0f);
 						midSize[j]->setVelocity(midSize[j]->getAcceleration());
-						midSize[j]->setHealth(20);
+						midSize[j]->setDir(glm::vec2(0.0f, 0.0f));
+						midSize[j]->setHealth(2000);
 						break;
 					}
 				}
@@ -789,7 +821,8 @@ void spawnAsteroid()
 						smallSize[i]->setOrient(glm::radians((float)(rand() % 360)));
 						smallSize[i]->setAcceleration(5.0f);
 						smallSize[i]->setVelocity(smallSize[i]->getAcceleration());
-						smallSize[i]->setHealth(10);
+						smallSize[i]->setDir(glm::vec2(0.0f, 0.0f));
+						smallSize[i]->setHealth(1000);
 						break;
 					}
 				}
@@ -887,13 +920,16 @@ void spawnAsteroid()
 }
 
 void movementAsteroids(double tDelta)
-{
+{//bulletArray[i]->setDir(glm::vec2(bulletArray[i]->position.x, bulletArray[i]->position.y));
 	for (int i = 0; i < 400; i++)
 	{
 		if (smallSize[i]->getIsDead() == false)
 		{
 			dx = smallSize[i]->getVelocity() * cos(smallSize[i]->getOrient()) * (float)tDelta;
 			dy = smallSize[i]->getVelocity() * sin(smallSize[i]->getOrient()) * (float)tDelta;
+
+		//	smallSize[i]->setDir(glm::vec2(smallSize[i]->position.x, smallSize[i]->position.y));
+			smallSize[i]->setDir(glm::vec2(dx, dy));
 
 			smallSize[i]->position.x += dx;
 			smallSize[i]->position.y += dy;
@@ -906,6 +942,9 @@ void movementAsteroids(double tDelta)
 			dx = midSize[j]->getVelocity() * cos(midSize[j]->getOrient()) * (float)tDelta;
 			dy = midSize[j]->getVelocity() * sin(midSize[j]->getOrient()) * (float)tDelta;
 
+		//	midSize[j]->setDir(glm::vec2(midSize[j]->position.x, midSize[j]->position.y));
+			midSize[j]->setDir(glm::vec2(dx, dy));
+
 			midSize[j]->position.x += dx;
 			midSize[j]->position.y += dy;
 		}
@@ -916,6 +955,9 @@ void movementAsteroids(double tDelta)
 		{
 			dx = bigSize[z]->getVelocity() * cos(bigSize[z]->getOrient()) * (float)tDelta;
 			dy = bigSize[z]->getVelocity() * sin(bigSize[z]->getOrient()) * (float)tDelta;
+
+		//	bigSize[z]->setDir(glm::vec2(bigSize[z]->position.x, bigSize[z]->position.y));
+			bigSize[z]->setDir(glm::vec2(dx, dy));
 
 			bigSize[z]->position.x += dx;
 			bigSize[z]->position.y += dy;
@@ -957,9 +999,11 @@ void flyBullet(double tDelta)
 		{
 			float dx = bulletArray[i]->getAcceleration() * cos(bulletArray[i]->orientation) * (float)tDelta;
 			float dy = bulletArray[i]->getAcceleration() * sin(bulletArray[i]->orientation) * (float)tDelta;
+
+			bulletArray[i]->setDir(glm::vec2(dx, dy));
+
 			bulletArray[i]->position.x += dx;
 			bulletArray[i]->position.y += dy;
-			cout << "flying bullet from index " << i << endl;
 		}
 	}
 
@@ -981,7 +1025,6 @@ void bulletOffScreen(float viewWidth, float viewHight)
 			{
 				bulletArray[i]->setIsDead(true);
 				bulletArray[i]->position = glm::vec2(0.0f, 200.0f);
-				cout << "bullet despawns " << i << endl;
 			}
 		}
 	}

@@ -10,9 +10,10 @@ AstrodsBase::AstrodsBase() : GameObject2D()
 	orient = 0.0f;
 	orientationAcceleration = 0.0f;
 	velocity = 0.0f;
+	dir = glm::vec2(0.0f, 0.0f);
 }
 
-AstrodsBase::AstrodsBase(glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float orientationAcceleration, float initVelocity) : GameObject2D(initPosition, initOrientation, initSize, initTextureID)
+AstrodsBase::AstrodsBase(glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float orientationAcceleration, float initVelocity, glm::vec2 initdir) : GameObject2D(initPosition, initOrientation, initSize, initTextureID)
 {
 
 	setDamage(initDamage);
@@ -64,6 +65,10 @@ float AstrodsBase::getVelocity()
 {
 	return this->velocity;
 }
+glm::vec2 AstrodsBase::getDir() const
+{
+	return this->dir;
+}
 
 // Setter methods
 void AstrodsBase::setDamage(int initDamage)
@@ -97,4 +102,8 @@ void AstrodsBase::setOrientationAcceleration(float orientationAcceleration)
 void AstrodsBase::setVelocity(float initVelocity)
 {
 	this->velocity = initVelocity;
+}
+void AstrodsBase::setDir(glm::vec2 initdir)
+{
+	this->dir = initdir;
 }

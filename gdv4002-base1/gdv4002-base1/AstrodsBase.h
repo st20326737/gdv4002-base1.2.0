@@ -15,10 +15,11 @@ private:
 	float orient;
 	float orientationAcceleration;
 	float velocity;
+	glm::vec2 dir;
 
 public:
 	AstrodsBase();
-	AstrodsBase(glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float orientationAcceleration, float initVelocity);
+	AstrodsBase(glm::vec2 initPosition, float initOrientation, glm::vec2 initSize, GLuint initTextureID, int initDamage, int initHealth, float initMass, float initAcceleration, bool initIsDead, float orientationAcceleration, float initVelocity, glm::vec2 initdir);
 	~AstrodsBase();
 
 	// Getter methods
@@ -30,6 +31,7 @@ public:
 	float getOrient() const;
 	float getOrientationAcceleration() const;
 	float getVelocity();
+	glm::vec2 getDir() const;
 
 	// Setter methods
 	void setDamage(int initDamage);
@@ -40,6 +42,7 @@ public:
 	void setOrient(float orient);
 	void setOrientationAcceleration(float orientationAcceleration);
 	void setVelocity(float initVelocity);
+	void setDir(glm::vec2 initdir);
 
 };
 
