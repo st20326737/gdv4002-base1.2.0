@@ -42,6 +42,11 @@ float maxSpeedAsteroid = 5.0f;
 int level = 0;
 int difficultyPoints = 100;
 int astrodsThatIsDead = 0;
+float movetimer = 0.0f;
+float moveCooldown = 0.01f;
+float asterHitPlayerCooldown = 10.0f;
+float asterHitPlayerTimer = 0.0f;
+
 
 //arrays
 AstrodsBase* smallSize[400];
@@ -77,6 +82,17 @@ void keepAsteroidsOnScreen(float viewWidth, float viewHight);
 void orientationAsteroids(double tDelta);
 
 void bulletHit(double tDelta);
+void shoot(float tDelta);
+void turnShip(float tDelta);
+void accelerateShip(float tDelta);
+void spawningAsteroid(float temp1, float temp2, AstrodsBase* astrod);
+
+void splitAsteroidBig(AstrodsBase* asteroid);
+void splitAsteroidMid(AstrodsBase* asteroid);
+
+void asteroidTouchPlayer(GLFWwindow* window, PlayerShip* player, AstrodsBase* asteroid, float tDelta);
+void touch(GLFWwindow* window, float tDelta);
+void asteroidContactAsteroid(AstrodsBase* asteroid1, AstrodsBase* asteroid2);
 
 //player ship
 PlayerShip* playerShip;
@@ -106,6 +122,11 @@ int main(void)
 		printf("Cannot setup game window!!!\n");
 		return initResult; // exit if setup failed
 	}
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthFunc(GL_ALWAYS);
+
 
 	//
 	// Setup game scene objects here
@@ -163,22 +184,255 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 	bulletHit((double)tDelta);
 
 	//shoot
-	shoottimer += (float)tDelta;
-
-	if (shoottimer >= shootCooldown)
-	{
-		if (spacePressed)
-		{
-			shootBullet(playerShip, (float)tDelta);
-			shoottimer = 0.0f;
-		}
-	}
+	shoot((float)tDelta);
 
 	flyBullet(tDelta);
 
 	bulletOffScreen(getViewplaneWidth() / 2.0f, getViewplaneHeight() / 2.0f);
 
 	//turn
+	turnShip((float)tDelta);
+
+
+	//accelerate
+	accelerateShip((float)tDelta);
+
+	//check for asteroid touching player
+	touch(window, (float)tDelta);
+
+
+}
+void impactVelocity(ProjectilesBase* bullet, AstrodsBase* asteroid)
+{
+	float force1, force2, force3, temp, a, v;
+
+	force1 = bullet->getMass() * bullet->getAcceleration();
+	force2 = asteroid->getMass() * asteroid->getAcceleration();
+
+	//change asteroid acceleration
+	glm::vec2 dirt1 = bullet->getDir();
+	glm::vec2 dirt2 = asteroid->getDir();
+	temp = glm::dot(glm::normalize(dirt1), glm::normalize(dirt2));
+	if (temp < 0)
+	{
+		if ((asteroid->getOrient() + glm::radians(180.0f)) > bullet->orientation && asteroid->getVelocity() <= 0)
+		{
+			asteroid->setOrient(asteroid->getOrient() + (bullet->orientation - asteroid->getOrient()) * 0.5);
+			asteroid->setVelocity(fabs(asteroid->getVelocity()));
+		}
+		if ((asteroid->getOrient() - glm::radians(180.0f)) < bullet->orientation && asteroid->getVelocity() <= 0)
+		{
+			asteroid->setOrient(asteroid->getOrient() - (asteroid->getOrient() - bullet->orientation) * 0.5);
+			asteroid->setVelocity(fabs(asteroid->getVelocity()));
+		}
+		force3 = -(force2 - force1);
+
+	}
+	else
+	{
+		if ((asteroid->getOrient() + glm::radians(180.0f)) > bullet->orientation)
+		{
+			asteroid->setOrient(asteroid->getOrient() + (bullet->orientation - asteroid->getOrient()) * 0.5);
+		}
+		if ((asteroid->getOrient() - glm::radians(180.0f)) < bullet->orientation)
+		{
+			asteroid->setOrient(asteroid->getOrient() - (asteroid->getOrient() - bullet->orientation) * 0.5);
+		}
+		asteroid->setOrient(asteroid->getOrient() + (bullet->orientation - asteroid->getOrient()) * 0.5);
+		force3 = force2 + force1;
+	}
+
+	a = force3 / asteroid->getMass();
+	v = asteroid->getVelocity() + a;
+	asteroid->setVelocity(v);
+
+}
+
+void asteroidContactAsteroid(AstrodsBase* asteroid1, AstrodsBase* asteroid2)//concept for future use
+{
+	float force1, force2, force3, temp, a1, a2, v1, v2;
+	//small 5, mid 10, big 20
+	// 
+	//handle hit
+	float distance = glm::distance(asteroid1->position, asteroid2->position);
+	if (distance < 10.0f)//10 is radius of asteroid for testing
+	{
+		force1 = asteroid1->getMass() * asteroid1->getAcceleration();
+		force2 = asteroid2->getMass() * asteroid2->getAcceleration();
+
+		glm::vec2 dirt1 = asteroid1->getDir();
+		glm::vec2 dirt2 = asteroid2->getDir();
+
+		temp = glm::dot(glm::normalize(dirt1), glm::normalize(dirt2));
+
+		if (temp < 0)
+		{
+			if ((asteroid1->getOrient() + glm::radians(180.0f)) > asteroid2->getOrient() && asteroid1->getVelocity() <= 0)
+			{
+				asteroid1->setOrient(asteroid1->getOrient() + (asteroid2->getOrient() - asteroid1->getOrient()) * 0.5);
+				asteroid1->setVelocity(fabs(asteroid1->getVelocity()));
+			}
+			if ((asteroid1->getOrient() - glm::radians(180.0f)) < asteroid2->getOrient() && asteroid1->getVelocity() <= 0)
+			{
+				asteroid1->setOrient(asteroid1->getOrient() - (asteroid1->getOrient() - asteroid2->getOrient()) * 0.5);
+				asteroid1->setVelocity(fabs(asteroid1->getVelocity()));
+			}
+
+			if ((asteroid2->getOrient() + glm::radians(180.0f)) > asteroid1->getOrient() && asteroid2->getVelocity() <= 0)
+			{
+				asteroid2->setOrient(asteroid2->getOrient() + (asteroid1->getOrient() - asteroid2->getOrient()) * 0.5);
+				asteroid2->setVelocity(fabs(asteroid2->getVelocity()));
+			}
+			if ((asteroid2->getOrient() - glm::radians(180.0f)) < asteroid1->getOrient() && asteroid2->getVelocity() <= 0)
+			{
+				asteroid2->setOrient(asteroid2->getOrient() - (asteroid2->getOrient() - asteroid1->getOrient()) * 0.5);
+				asteroid2->setVelocity(fabs(asteroid2->getVelocity()));
+			}
+
+			force3 = -(force2 - force1);
+		}
+		else
+		{
+			if ((asteroid1->getOrient() + glm::radians(180.0f)) > asteroid2->getOrient())
+			{
+				asteroid1->setOrient(asteroid1->getOrient() + (asteroid2->getOrient() - asteroid1->getOrient()) * 0.5);
+			}
+			if ((asteroid1->getOrient() - glm::radians(180.0f)) < asteroid2->getOrient())
+			{
+				asteroid1->setOrient(asteroid1->getOrient() - (asteroid1->getOrient() - asteroid2->getOrient()) * 0.5);
+			}
+
+			if ((asteroid2->getOrient() + glm::radians(180.0f)) > asteroid1->getOrient())
+			{
+				asteroid2->setOrient(asteroid2->getOrient() + (asteroid1->getOrient() - asteroid2->getOrient()) * 0.5);
+			}
+			if ((asteroid2->getOrient() - glm::radians(180.0f)) < asteroid1->getOrient())
+			{
+				asteroid2->setOrient(asteroid2->getOrient() - (asteroid2->getOrient() - asteroid1->getOrient()) * 0.5);
+			}
+
+			asteroid1->setOrient(asteroid1->getOrient() + (asteroid2->getOrient() - asteroid1->getOrient()) * 0.5);
+			asteroid2->setOrient(asteroid2->getOrient() + (asteroid1->getOrient() - asteroid2->getOrient()) * 0.5);
+			force3 = force2 + force1;
+		}
+
+		a1 = force3 / asteroid1->getMass();
+		v1 = asteroid1->getVelocity() + a1;
+		asteroid1->setVelocity(v1);
+
+		a2 = force3 / asteroid2->getMass();
+		v2 = asteroid2->getVelocity() + a2;
+		asteroid2->setVelocity(v2);
+
+	}
+}
+
+
+void asteroidTouchPlayer(GLFWwindow* window, PlayerShip* player, AstrodsBase* asteroid, float tDelta)
+{
+	//handle hit
+	asterHitPlayerTimer += (float)tDelta;
+
+	if (asterHitPlayerTimer > asterHitPlayerCooldown)
+	{
+		float distance = glm::distance(player->position, asteroid->position);
+		if (distance < 10.0f)//10 is radius of asteroid + radius of player ship
+		{
+			//hit detected
+			asterHitPlayerTimer = 0.0f;
+			player->setHealth(player->getHealth() - asteroid->getDamage());
+			asteroid->setHealth(asteroid->getHealth() - player->getDamage());
+			cout << "  " << endl;
+			cout << "player hit by asteroid" << endl;
+			cout << "player health: " << player->getHealth() << endl;
+			//check if player is destroyed
+			if (player->getHealth() <= 0)
+			{
+				player->setIsDead(true);
+				cout << "player destroyed" << endl;
+				glfwSetWindowShouldClose(window, GLFW_TRUE);
+			}
+		}
+		
+	}
+	
+}
+
+void touch(GLFWwindow* window, float tDelta)
+{
+	for (int i = 0; i < 400; i++)
+	{
+		if (!(smallSize[i]->getIsDead()))
+		{
+			asteroidTouchPlayer(window, playerShip, smallSize[i], tDelta);
+		}
+	}
+	for (int j = 0; j < 200; j++)
+	{
+		if (!(midSize[j]->getIsDead()))
+		{
+			asteroidTouchPlayer(window, playerShip, midSize[j], tDelta);
+		}
+	}
+	for (int k = 0; k < 100; k++)
+	{
+		if (!(bigSize[k]->getIsDead()))
+		{
+			asteroidTouchPlayer(window, playerShip, bigSize[k], tDelta);
+		}
+	}
+}
+
+void accelerateShip(float tDelta)
+{
+	movetimer += (float)tDelta;
+
+	if (movetimer >= moveCooldown) 
+	{
+		if (wPressed)
+		{
+			forwardVelocity += forwardAcceleration;
+		}
+		if (sPressed)
+		{
+			forwardVelocity -= forwardAcceleration;
+		}
+		if (shiftPressed)
+		{
+			if (forwardVelocity > 0)
+			{
+				forwardVelocity -= forwardAcceleration;
+			}
+			else if (forwardVelocity < 0)
+			{
+				forwardVelocity += forwardAcceleration;
+			}
+
+			if (turnVelocity > 0)
+			{
+				turnVelocity -= turnAcceleration;
+			}
+			else if (turnVelocity < 0)
+			{
+				turnVelocity += forwardAcceleration;
+			}
+		}
+
+		if (fabs(forwardVelocity) > maxSpeed)
+		{
+			forwardVelocity = (forwardVelocity / fabs(forwardVelocity)) * maxSpeed;//scale to max speed with sign
+		}
+		movetimer = 0.0f;
+	}
+	dx = forwardVelocity * cos(playerShip->orientation) * (float)tDelta;
+	dy = forwardVelocity * sin(playerShip->orientation) * (float)tDelta;
+
+	playerShip->position.x += dx;
+	playerShip->position.y += dy;
+}
+
+void turnShip(float tDelta)
+{
 	if (aPressed)
 	{
 		turnVelocity += turnAcceleration;
@@ -196,49 +450,20 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 	thetaVelocity = (pi / 180.0f) * turnVelocity;
 
 	playerShip->orientation += thetaVelocity * (float)tDelta;
+}
 
+void shoot(float tDelta)
+{
+	shoottimer += (float)tDelta;
 
-	//accelerate
-	if (wPressed)
+	if (shoottimer >= shootCooldown)
 	{
-		forwardVelocity += forwardAcceleration;
-	}
-	if (sPressed)
-	{
-		forwardVelocity -= forwardAcceleration;
-	}
-	if (shiftPressed)
-	{
-		if (forwardVelocity > 0)
+		if (spacePressed)
 		{
-			forwardVelocity -= forwardAcceleration;
-		}
-		else if (forwardVelocity < 0)
-		{
-			forwardVelocity += forwardAcceleration;
-		}
-
-		if (turnVelocity > 0)
-		{
-			turnVelocity -= turnAcceleration;
-		}
-		else if (turnVelocity < 0)
-		{
-			turnVelocity += forwardAcceleration;
+			shootBullet(playerShip, (float)tDelta);
+			shoottimer = 0.0f;
 		}
 	}
-
-	if (fabs(forwardVelocity) > maxSpeed)
-	{
-		forwardVelocity = (forwardVelocity / fabs(forwardVelocity)) * maxSpeed;//scale to max speed with sign
-	}
-
-	dx = forwardVelocity * cos(playerShip->orientation) * (float)tDelta;
-	dy = forwardVelocity * sin(playerShip->orientation) * (float)tDelta;
-
-	playerShip->position.x += dx;
-	playerShip->position.y += dy;
-
 }
 
 void bulletHit(double tDelta)
@@ -307,8 +532,11 @@ void bulletHit(double tDelta)
 					if (midSize[b]->getHealth() <= 0)
 					{
 						midSize[b]->setIsDead(true);
+						splitAsteroidMid(midSize[b]);
 						midSize[b]->position = glm::vec2(200.0f, 0.0f);
 						cout << "mid asteroid destroyed at index " << b << endl;
+						
+
 					}
 				}
 			}
@@ -339,8 +567,10 @@ void bulletHit(double tDelta)
 					if (bigSize[y]->getHealth() <= 0)
 					{
 						bigSize[y]->setIsDead(true);
+						splitAsteroidBig(bigSize[y]);
 						bigSize[y]->position = glm::vec2(200.0f, 0.0f);
-						cout << "small big destroyed at index " << y << endl;
+						cout << "big asteroid destroyed at index " << y << endl;
+						
 					}
 				}
 			}
@@ -374,56 +604,71 @@ void bulletHit(double tDelta)
 	}
 }
 
-void impactVelocity(ProjectilesBase* bullet, AstrodsBase* asteroid) 
+void splitAsteroidBig(AstrodsBase* asteroid)
 {
-	float force1, force2, force3, temp, a, v;
+	float temp1, temp2;
+	temp1 = 0.0f;
+	temp2 = 0.0f;
+	int twoTimes = 0;
 
-	force1 = bullet->getMass() * bullet->getAcceleration();
-	force2 = asteroid->getMass() * asteroid->getAcceleration();
-
-	//change asteroid acceleration
-	glm::vec2 dirt1 = bullet->getDir();
-	glm::vec2 dirt2 = asteroid->getDir();
-	temp = glm::dot(glm::normalize(dirt1), glm::normalize(dirt2));
-	if (temp < 0)
+	while (twoTimes < 2)
 	{
-		if ((asteroid->getOrient() + glm::radians(180.0f)) > bullet->orientation && asteroid->getVelocity() <= 0)
+		for (int z = 0; z < 100; z++)
 		{
-			asteroid->setOrient(asteroid->getOrient() + (bullet->orientation - asteroid->getOrient()) * 0.5);
-			asteroid->setVelocity(fabs(asteroid->getVelocity()));
-		}
-		if ((asteroid->getOrient() - glm::radians(180.0f)) < bullet->orientation && asteroid->getVelocity() <= 0)
-		{
-			asteroid->setOrient(asteroid->getOrient() - (asteroid->getOrient() - bullet->orientation) * 0.5);
-			asteroid->setVelocity(fabs(asteroid->getVelocity()));
-		}
-		force3 = -(force2 - force1);
-		
-	}
-	else
-	{
-		if ((asteroid->getOrient() + glm::radians(180.0f)) > bullet->orientation)
-		{
-			asteroid->setOrient(asteroid->getOrient() + (bullet->orientation - asteroid->getOrient()) * 0.5);
-		}
-		if ((asteroid->getOrient() - glm::radians(180.0f)) < bullet->orientation)
-		{
-			asteroid->setOrient(asteroid->getOrient() - (asteroid->getOrient() - bullet->orientation) * 0.5);
-		}
-		asteroid->setOrient(asteroid->getOrient() + (bullet->orientation - asteroid->getOrient()) * 0.5);
-		force3 = force2 + force1;
-	}
+			if (midSize[z]->getIsDead())
+			{
+				midSize[z]->setIsDead(false);
 
-	a = force3 / asteroid->getMass();
-	v = asteroid->getVelocity() + a;
-	asteroid->setVelocity(v);
-	cout << "a: " << a << endl;
-	cout << "v: " << v << endl;
-	cout << "asteroid new velocity: " << asteroid->getVelocity() << endl;
-	cout << "asteroid new orient: " << asteroid->getOrient() << endl;
-	
-	
+				//spawn outside of screen
+				temp1 = asteroid->position.x;
+				temp2 = asteroid->position.y;
+
+				//reset asteroid
+				spawningAsteroid(temp1, temp2, midSize[z]);
+				midSize[z]->setHealth(20);
+				twoTimes++;
+				break;
+			}
+		}
+	}
 }
+
+void splitAsteroidMid(AstrodsBase* asteroid)
+{
+	float temp1, temp2;
+	temp1 = 0.0f;
+	temp2 = 0.0f;
+	int twoTimes = 0;
+
+	while (twoTimes < 2)
+	{
+		for (int z = 0; z < 100; z++)
+		{
+			if (smallSize[z]->getIsDead())
+			{
+				smallSize[z]->setIsDead(false);
+
+				temp1 = asteroid->position.x;
+				temp2 = asteroid->position.y;
+
+				//reset asteroid
+				spawningAsteroid(temp1, temp2, smallSize[z]);
+				smallSize[z]->setHealth(10);
+				twoTimes++;
+				break;
+			}
+		}
+	}
+
+}
+
+
+
+
+
+	
+	
+
 
 void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -466,6 +711,11 @@ void myKeyboardHandler(GLFWwindow* window, int key, int scancode, int action, in
 		case GLFW_KEY_LEFT_SHIFT:
 			// If escape is pressed tell GLFW we want to close the window (and quit)
 			shiftPressed = true;
+			break;
+
+		case GLFW_KEY_ESCAPE:
+			// If escape is pressed tell GLFW we want to close the window (and quit)
+			glfwSetWindowShouldClose(window, GLFW_TRUE);
 			break;
 		default:
 		{
@@ -742,6 +992,16 @@ void setUpLevel()
 
 }
 
+void spawningAsteroid(float temp1, float temp2, AstrodsBase* astrod)
+{
+	astrod->position = glm::vec2(temp1, temp2);
+	astrod->orientation = glm::radians((float)(rand() % 360));
+	astrod->setOrient(glm::radians((float)(rand() % 360)));
+	astrod->setAcceleration(5.0f);
+	astrod->setVelocity(astrod->getAcceleration());
+	astrod->setDir(glm::vec2(0.0f, 0.0f));
+}
+
 void spawnAsteroid()
 {
 	int type;
@@ -774,14 +1034,9 @@ void spawnAsteroid()
 							temp1 = (float)(rand() % 100 - 50);
 							temp2 = (float)(rand() % 100 - 50);
 						}
-
-						bigSize[z]->position = glm::vec2(temp1, temp2);
-						bigSize[z]->orientation = glm::radians((float)(rand() % 360));
-						bigSize[z]->setOrient(glm::radians((float)(rand() % 360)));
-						bigSize[z]->setAcceleration(0.5f);
-						bigSize[z]->setVelocity(bigSize[z]->getAcceleration());
-						bigSize[z]->setDir(glm::vec2(0.0f, 0.0f));
-						bigSize[z]->setHealth(4000);
+						//spawningAsteroid(float temp1, float temp2, AstrodsBase* astrod)
+						spawningAsteroid(temp1, temp2, bigSize[z]);
+						bigSize[z]->setHealth(40);
 						break;
 					}
 				}
@@ -802,13 +1057,8 @@ void spawnAsteroid()
 							temp2 = (float)(rand() % 100 - 50);
 						}
 
-						midSize[j]->position = glm::vec2(temp1, temp2);
-						midSize[j]->orientation = glm::radians((float)(rand() % 360));
-						midSize[j]->setOrient(glm::radians((float)(rand() % 360)));
-						midSize[j]->setAcceleration(2.0f);
-						midSize[j]->setVelocity(midSize[j]->getAcceleration());
-						midSize[j]->setDir(glm::vec2(0.0f, 0.0f));
-						midSize[j]->setHealth(2000);
+						spawningAsteroid(temp1, temp2, midSize[j]);
+						midSize[j]->setHealth(20);
 						break;
 					}
 				}
@@ -828,13 +1078,8 @@ void spawnAsteroid()
 							temp2 = (float)(rand() % 100 - 50);
 						}
 
-						smallSize[i]->position = glm::vec2(temp1, temp2);
-						smallSize[i]->orientation = glm::radians((float)(rand() % 360));
-						smallSize[i]->setOrient(glm::radians((float)(rand() % 360)));
-						smallSize[i]->setAcceleration(5.0f);
-						smallSize[i]->setVelocity(smallSize[i]->getAcceleration());
-						smallSize[i]->setDir(glm::vec2(0.0f, 0.0f));
-						smallSize[i]->setHealth(1000);
+						spawningAsteroid(temp1, temp2, smallSize[i]);
+						smallSize[i]->setHealth(10);
 						break;
 					}
 				}
@@ -858,8 +1103,7 @@ void spawnAsteroid()
 							temp2 = (float)(rand() % 120 - 60);
 						}
 
-						bigSize[z]->position = glm::vec2(temp1, temp2);
-						bigSize[z]->orientation = glm::radians((float)(rand() % 360));
+						spawningAsteroid(temp1, temp2, bigSize[z]);
 						bigSize[z]->setHealth(40);
 						break;
 					}
@@ -880,9 +1124,7 @@ void spawnAsteroid()
 							temp1 = (float)(rand() % 120 - 60);
 							temp2 = (float)(rand() % 120 - 60);
 						}
-
-						midSize[j]->position = glm::vec2(temp1, temp2);
-						midSize[j]->orientation = glm::radians((float)(rand() % 360));
+						spawningAsteroid(temp1, temp2, midSize[j]);
 						midSize[j]->setHealth(20);
 						break;
 					}
@@ -903,8 +1145,7 @@ void spawnAsteroid()
 							temp2 = (float)(rand() % 120 - 60);
 						}
 
-						smallSize[i]->position = glm::vec2(temp1, temp2);
-						smallSize[i]->orientation = glm::radians((float)(rand() % 360));
+						spawningAsteroid(temp1, temp2, smallSize[i]);
 						smallSize[i]->setHealth(10);
 						break;
 					}
