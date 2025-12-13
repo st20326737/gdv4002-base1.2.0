@@ -15,8 +15,8 @@ using std::cout;
 
 //global veriables
 const float pi = 3.14159265359f;
-const float maxSpeed = 200.0f;
-const float maxTurn = 250.0f;
+const float maxSpeed = 100.0f;
+const float maxTurn = 150.0f;
 const float maxBulletSpeed = 250.0f;
 
 float thetaVelocity; // radians per second
