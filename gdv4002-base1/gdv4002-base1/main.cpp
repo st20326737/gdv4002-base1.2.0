@@ -94,6 +94,10 @@ void asteroidTouchPlayer(GLFWwindow* window, PlayerShip* player, AstrodsBase* as
 void touch(GLFWwindow* window, float tDelta);
 void asteroidContactAsteroid(AstrodsBase* asteroid1, AstrodsBase* asteroid2);
 
+void checkIfAsteroidContactAsteroidSMALL();
+void checkIfAsteroidContactAsteroidMID();
+void checkIfAsteroidContactAsteroidBIG();
+
 //player ship
 PlayerShip* playerShip;
 
@@ -200,6 +204,14 @@ void myUpdateScene(GLFWwindow* window, double tDelta)
 	//check for asteroid touching player
 	touch(window, (float)tDelta);
 
+	//saddly this lags the game out to the point of unplayable, too many loops
+	/*
+	//check for asteroid touching asteroid
+	checkIfAsteroidContactAsteroidSMALL();
+	checkIfAsteroidContactAsteroidMID();
+	checkIfAsteroidContactAsteroidBIG();
+	*/
+	
 
 }
 void impactVelocity(ProjectilesBase* bullet, AstrodsBase* asteroid)
@@ -246,6 +258,93 @@ void impactVelocity(ProjectilesBase* bullet, AstrodsBase* asteroid)
 	v = asteroid->getVelocity() + a;
 	asteroid->setVelocity(v);
 
+}
+
+void checkIfAsteroidContactAsteroidSMALL()
+{
+	for (int i = 0; i < 400; i++)//small to small
+	{
+		for (int j = 0; j < 400; j++)
+		{
+			if (i != j)
+			{
+				asteroidContactAsteroid(smallSize[i], smallSize[j]);
+			}
+			
+		}
+	}
+	for (int z = 0; z < 400; z++)//small to mid
+	{
+		for (int y = 0; y < 200; y++)
+		{
+			asteroidContactAsteroid(smallSize[z], midSize[y]);
+		}
+	}
+	for (int a = 0; a < 400; a++)//small to big
+	{
+		for (int b = 0; b < 100; b++)
+		{
+			asteroidContactAsteroid(smallSize[a], bigSize[b]);
+		}
+	}
+}
+
+void checkIfAsteroidContactAsteroidMID()
+{
+	for (int i = 0; i < 200; i++)//mid to small
+	{
+		for (int j = 0; j < 400; j++)
+		{
+			asteroidContactAsteroid(midSize[i], smallSize[j]);
+		}
+	}
+	for (int z = 0; z < 200; z++)//mid to mid
+	{
+		for (int y = 0; y < 200; y++)
+		{
+			if (z != y)
+			{
+				asteroidContactAsteroid(midSize[z], midSize[y]);
+			}
+			
+		}
+	}
+	for (int a = 0; a < 200; a++)//mid to big
+	{
+		for (int b = 0; b < 100; b++)
+		{
+			asteroidContactAsteroid(midSize[a], bigSize[b]);
+		}
+	}
+}
+
+void checkIfAsteroidContactAsteroidBIG()//this needs changes of numbers
+{
+	for (int i = 0; i < 100; i++)//big to small
+	{
+		for (int j = 0; j < 400; j++)
+		{
+			asteroidContactAsteroid(bigSize[i], smallSize[j]);
+		}
+	}
+	for (int z = 0; z < 100; z++)//big to mid
+	{
+		for (int y = 0; y < 200; y++)
+		{
+			asteroidContactAsteroid(bigSize[z], midSize[y]);
+		}
+	}
+	for (int a = 0; a < 100; a++)//big to big
+	{
+		for (int b = 0; b < 100; b++)
+		{
+			if (a != b)
+			{
+				asteroidContactAsteroid(bigSize[a], bigSize[b]);
+			}
+			
+		}
+	}
 }
 
 void asteroidContactAsteroid(AstrodsBase* asteroid1, AstrodsBase* asteroid2)//concept for future use
